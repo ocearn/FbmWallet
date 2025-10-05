@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexaWallet - Smart Digital Wallet</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #8b5cf6;
+            --accent: #06d6a0;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius: 16px;
+        }
+
+        .dark-mode {
+            --text: #f1f5f9;
+            --text-light: #94a3b8;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            margin-bottom: 20px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .profile-pic {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 2px;
+        }
+
+        .profile-details {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+        }
+
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .theme-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .balance-amount {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .balance-stats {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Quick Actions */
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 25px 0 15px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .action-btn {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 15px 10px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            color: var(--text);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-5px);
+        }
+
+        .action-btn i {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .action-btn span {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border-radius: 20px 20px 0 0;
+            padding: 30px 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        .transfer-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .transfer-option-btn {
+            background: var(--bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .transfer-option-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .transfer-option-btn:hover i {
+            color: white;
+        }
+
+        .transfer-option-btn i {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        .transfer-option-info {
+            text-align: left;
+            flex: 1;
+        }
+
+        .transfer-option-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .transfer-option-desc {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .transfer-option-btn:hover .transfer-option-desc {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Transactions */
+        .transactions {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 80px;
+        }
+
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .dark-mode .transaction-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .transaction-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .income {
+            background: rgba(6, 214, 160, 0.2);
+            color: var(--accent);
+        }
+
+        .expense {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .transaction-details {
+            flex: 1;
+        }
+
+        .transaction-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .transaction-date {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .transaction-amount {
+            font-weight: 700;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card);
+            color: var(--text);
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast i {
+            color: var(--accent);
+            font-size: 1.2rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header with User Profile -->
+        <header>
+            <div class="user-profile">
+                <div class="profile-pic" id="profilePic">U</div>
+                <div class="profile-info">
+                    <div class="profile-name" id="profileName">Loading...</div>
+                    <div class="profile-details">
+                        <span id="userName">@username</span> • 
+                        <span id="userId">ID: ...</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Balance Card -->
+        <div class="balance-card fade-in">
+            <div class="balance-header">
+                <div class="balance-label">Total Balance</div>
+                <div class="theme-icon" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </div>
+            </div>
+            <div class="balance-amount" id="balanceAmount">$0.00</div>
+            <div class="balance-stats">
+                <div class="stat">
+                    <div class="stat-label">Available for withdraw</div>
+                    <div class="stat-value" id="availableBalance">$0.00</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Last Updated</div>
+                    <div class="stat-value" id="lastUpdateDate">--/--/----</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section-title">Quick Actions</div>
+        <div class="quick-actions">
+            <button class="action-btn" id="transferBtn">
+                <i class="fas fa-paper-plane"></i>
+                <span>Transfer</span>
+            </button>
+            <button class="action-btn" id="depositBtn">
+                <i class="fas fa-download"></i>
+                <span>Deposit</span>
+            </button>
+            <button class="action-btn" id="withdrawBtn">
+                <i class="fas fa-mobile-alt"></i>
+                <span>Withdraw</span>
+            </button>
+        </div>
+
+        <!-- Transfer Modal -->
+        <div class="modal" id="transferModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">Transfer Money</div>
+                    <button class="close-modal" id="closeTransferModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="transfer-options">
+                    <button class="transfer-option-btn" id="transferFriendBtn">
+                        <i class="fas fa-user-friends"></i>
+                        <div class="transfer-option-info">
+                            <div class="transfer-option-title">Transfer to Friend</div>
+                            <div class="transfer-option-desc">Send money to your friends</div>
+                        </div>
+                    </button>
+                    <button class="transfer-option-btn" id="transferAgentBtn">
+                        <i class="fas fa-user-tie"></i>
+                        <div class="transfer-option-info">
+                            <div class="transfer-option-title">Transfer to Agent</div>
+                            <div class="transfer-option-desc">Send money to authorized agents</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions -->
+        <div class="section-title">Recent Transactions</div>
+        <div class="transactions" id="transactionsList">
+            <div class="loading">Loading transactions...</div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Welcome to NexaWallet!</span>
+    </div>
+
+    <script>
+        // Firebase Configuration - এখানে আপনার Firebase config বসাবেন
+       // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDVSA8ip1vBTs_HFZGkXAPct0v-gU6CzG0",
+  authDomain: "testingpp-935bc.firebaseapp.com",
+  databaseURL: "https://testingpp-935bc-default-rtdb.firebaseio.com",
+  projectId: "testingpp-935bc",
+  storageBucket: "testingpp-935bc.firebasestorage.app",
+  messagingSenderId: "303082886262",
+  appId: "1:303082886262:web:0be011a2659985c3a1bb57",
+  measurementId: "G-TVG8YCF2N1"
+};
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Telegram Web App
+        const tg = window.Telegram.WebApp;
+        let userData = null;
+
+        // Initialize Telegram Web App
+        tg.expand();
+        tg.ready();
+
+        // Get user data from Telegram
+        if (tg.initDataUnsafe.user) {
+            userData = tg.initDataUnsafe.user;
+            updateUserProfile(userData);
+            loadUserData(userData.id);
+        } else {
+            // Fallback for development
+            userData = {
+                id: 123456789,
+                first_name: "Demo",
+                username: "demo_user",
+                photo_url: null
+            };
+            updateUserProfile(userData);
+            loadUserData(userData.id);
+        }
+
+        // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
+        const transferBtn = document.getElementById('transferBtn');
+        const depositBtn = document.getElementById('depositBtn');
+        const withdrawBtn = document.getElementById('withdrawBtn');
+        const transferModal = document.getElementById('transferModal');
+        const closeTransferModal = document.getElementById('closeTransferModal');
+        const transferFriendBtn = document.getElementById('transferFriendBtn');
+        const transferAgentBtn = document.getElementById('transferAgentBtn');
+        const balanceAmount = document.getElementById('balanceAmount');
+        const availableBalance = document.getElementById('availableBalance');
+        const lastUpdateDate = document.getElementById('lastUpdateDate');
+        const transactionsList = document.getElementById('transactionsList');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+
+        // Theme Toggle (এখন Balance Card-এর ভিতরে)
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDarkMode);
+            
+            // Update theme icon
+            const themeIcon = themeToggle.querySelector('i');
+            themeIcon.className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+        });
+
+        // Check for saved theme preference
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (savedDarkMode) {
+                document.body.classList.add('dark-mode');
+                const themeIcon = themeToggle.querySelector('i');
+                themeIcon.className = 'fas fa-sun';
+            }
+        });
+
+        // Transfer Button Click - Modal Open
+        transferBtn.addEventListener('click', function() {
+            transferModal.style.display = 'block';
+            setTimeout(() => {
+                transferModal.classList.add('show');
+            }, 10);
+        });
+
+        // Close Transfer Modal
+        closeTransferModal.addEventListener('click', function() {
+            transferModal.classList.remove('show');
+            setTimeout(() => {
+                transferModal.style.display = 'none';
+            }, 300);
+        });
+
+        // Transfer Friend Button
+        transferFriendBtn.addEventListener('click', function() {
+            openTransferPage('friend');
+        });
+
+        // Transfer Agent Button
+        transferAgentBtn.addEventListener('click', function() {
+            openTransferPage('agent');
+        });
+
+        // Deposit Button - নতুন পেজে redirect
+        depositBtn.addEventListener('click', function() {
+            openActionPage('deposit');
+        });
+
+        // Withdraw Button - নতুন পেজে redirect
+        withdrawBtn.addEventListener('click', function() {
+            openActionPage('withdraw');
+        });
+
+        // Functions
+        function updateUserProfile(user) {
+            document.getElementById('profileName').textContent = user.first_name || 'User';
+            document.getElementById('userName').textContent = '@' + (user.username || 'username');
+            document.getElementById('userId').textContent = 'ID: ' + user.id;
+            
+            const profilePic = document.getElementById('profilePic');
+            if (user.photo_url) {
+                profilePic.style.backgroundImage = `url(${user.photo_url})`;
+                profilePic.style.backgroundSize = 'cover';
+                profilePic.textContent = '';
+            } else {
+                profilePic.textContent = user.first_name ? user.first_name.charAt(0).toUpperCase() : 'U';
+            }
+        }
+
+        function loadUserData(userId) {
+            // Load balance data
+            db.collection('userBalance').doc(userId.toString()).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        balanceAmount.textContent = '$' + (data.balance || '0.00');
+                        availableBalance.textContent = '$' + (data.availableBalance || data.balance || '0.00');
+                        
+                        if (data.lastUpdate) {
+                            const date = data.lastUpdate.toDate();
+                            lastUpdateDate.textContent = date.toLocaleDateString();
+                        } else {
+                            lastUpdateDate.textContent = new Date().toLocaleDateString();
+                        }
+                    } else {
+                        // Create initial balance record
+                        db.collection('userBalance').doc(userId.toString()).set({
+                            balance: 0.00,
+                            availableBalance: 0.00,
+                            lastUpdate: new Date()
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error loading balance:", error);
+                    showToast('Error loading balance');
+                });
+
+            // Load transactions
+            loadTransactions(userId);
+        }
+
+        function loadTransactions(userId) {
+            db.collection('transactions')
+                .where('userId', '==', userId.toString())
+                .orderBy('date', 'desc')
+                .limit(10)
+                .get()
+                .then((querySnapshot) => {
+                    transactionsList.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        transactionsList.innerHTML = '<div class="loading">No transactions yet</div>';
+                        return;
+                    }
+
+                    querySnapshot.forEach((doc) => {
+                        const transaction = doc.data();
+                        const transactionItem = createTransactionElement(transaction);
+                        transactionsList.appendChild(transactionItem);
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error loading transactions:", error);
+                    transactionsList.innerHTML = '<div class="loading">Error loading transactions</div>';
+                });
+        }
+
+        function createTransactionElement(transaction) {
+            const div = document.createElement('div');
+            div.className = 'transaction-item';
+            
+            const isIncome = transaction.type === 'deposit';
+            const iconClass = isIncome ? 'income' : 'expense';
+            const icon = isIncome ? 'fa-plus' : 'fa-minus';
+            const amountPrefix = isIncome ? '+' : '-';
+            
+            div.innerHTML = `
+                <div class="transaction-icon ${iconClass}">
+                    <i class="fa-solid ${icon}"></i>
+                </div>
+                <div class="transaction-details">
+                    <div class="transaction-title">${transaction.description || transaction.type}</div>
+                    <div class="transaction-date">${transaction.date.toDate().toLocaleDateString()}</div>
+                </div>
+                <div class="transaction-amount ${iconClass}">${amountPrefix}$${transaction.amount}</div>
+            `;
+            
+            return div;
+        }
+
+        function openTransferPage(type) {
+            // এখানে আপনার actual domain/path দিবেন
+            const baseUrl = 'https://yourdomain.com'; // আপনার ডোমেইন
+            const params = new URLSearchParams({
+                userId: userData.id,
+                userName: userData.username || '',
+                firstName: userData.first_name || '',
+                type: type
+            });
+            
+            // Transfer পেজে redirect
+            window.location.href = `${baseUrl}/transfer.html?${params.toString()}`;
+        }
+
+        function openActionPage(action) {
+            // এখানে আপনার actual domain/path দিবেন
+            const baseUrl = 'https://yourdomain.com'; // আপনার ডোমেইন
+            const params = new URLSearchParams({
+                userId: userData.id,
+                userName: userData.username || '',
+                firstName: userData.first_name || '',
+                action: action
+            });
+            
+            // Deposit/Withdraw পেজে redirect
+            window.location.href = `${baseUrl}/${action}.html?${params.toString()}`;
+        }
+
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Show welcome toast
+        setTimeout(() => {
+            showToast('Welcome to NexaWallet!');
+        }, 1000);
+    </script>
+</body>
+</html>
