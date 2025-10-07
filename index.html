@@ -822,7 +822,7 @@
         <span id="toastMessage">Welcome to NexaWallet!</span>
     </div>
 
-   <script>
+  <script>
     // Firebase Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyDVSA8ip1vBTs_HFZGkXAPct0v-gU6CzG0",
@@ -842,6 +842,8 @@
     // Telegram Web App
     const tg = window.Telegram.WebApp;
     let userData = null;
+    let allTransactions = [];
+    let filteredTransactions = [];
 
     // Initialize Telegram Web App
     tg.expand();
@@ -857,6 +859,7 @@
         userData = {
             id: 123456789,
             first_name: "Demo",
+            last_name: "User",
             username: "demo_user",
             photo_url: null
         };
@@ -890,7 +893,7 @@
     const customDateInput = document.getElementById('customDateInput');
     const applyDateFilter = document.getElementById('applyDateFilter');
 
-    // Theme Toggle (এখন Balance Card-এর ভিতরে)
+    // Theme Toggle
     themeToggle.addEventListener('click', () => {
         document.body.classList.toggle('dark-mode');
         const isDarkMode = document.body.classList.contains('dark-mode');
@@ -929,13 +932,15 @@
 
     // Transfer Friend Button - আপডেটেড লিংক
     transferFriendBtn.addEventListener('click', function() {
-        const baseUrl = window.location.origin;
+        const baseUrl = 'https://ocearn.github.io/FbmWallet';
+        const isDarkMode = document.body.classList.contains('dark-mode');
         const params = new URLSearchParams({
             userId: userData.id,
             userName: userData.username || '',
             firstName: userData.first_name || '',
             lastName: userData.last_name || '',
-            type: 'friend'
+            type: 'friend',
+            theme: isDarkMode ? 'dark' : 'light'
         });
         
         window.location.href = `${baseUrl}/transfer/friend.html?${params.toString()}`;
@@ -943,13 +948,15 @@
 
     // Transfer Agent Button - আপডেটেড লিংক
     transferAgentBtn.addEventListener('click', function() {
-        const baseUrl = window.location.origin;
+        const baseUrl = 'https://ocearn.github.io/FbmWallet';
+        const isDarkMode = document.body.classList.contains('dark-mode');
         const params = new URLSearchParams({
             userId: userData.id,
             userName: userData.username || '',
             firstName: userData.first_name || '',
             lastName: userData.last_name || '',
-            type: 'agent'
+            type: 'agent',
+            theme: isDarkMode ? 'dark' : 'light'
         });
         
         window.location.href = `${baseUrl}/transfer/agent.html?${params.toString()}`;
@@ -957,13 +964,15 @@
 
     // Deposit Button - আপডেটেড লিংক
     depositBtn.addEventListener('click', function() {
-        const baseUrl = window.location.origin;
+        const baseUrl = 'https://ocearn.github.io/FbmWallet';
+        const isDarkMode = document.body.classList.contains('dark-mode');
         const params = new URLSearchParams({
             userId: userData.id,
             userName: userData.username || '',
             firstName: userData.first_name || '',
             lastName: userData.last_name || '',
-            action: 'deposit'
+            action: 'deposit',
+            theme: isDarkMode ? 'dark' : 'light'
         });
         
         window.location.href = `${baseUrl}/deposit/index.html?${params.toString()}`;
@@ -972,20 +981,63 @@
     // Withdraw Button - আপডেটেড লিংক
     withdrawBtn.addEventListener('click', function() {
         const baseUrl = 'https://ocearn.github.io/FbmWallet';
+        const isDarkMode = document.body.classList.contains('dark-mode');
         const params = new URLSearchParams({
             userId: userData.id,
             userName: userData.username || '',
             firstName: userData.first_name || '',
             lastName: userData.last_name || '',
-            action: 'withdraw'
+            action: 'withdraw',
+            theme: isDarkMode ? 'dark' : 'light'
         });
         
         window.location.href = `${baseUrl}/withdraw/index.html?${params.toString()}`;
     });
 
+    // সার্চ ফাংশনালিটি
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        filterTransactions(searchTerm);
+    });
+
+    // তারিখ ফিল্টার ফাংশনালিটি
+    dateFilterBtn.addEventListener('click', function() {
+        dateFilterModal.style.display = 'block';
+        setTimeout(() => {
+            dateFilterModal.classList.add('show');
+        }, 10);
+    });
+
+    closeDateFilterModal.addEventListener('click', function() {
+        dateFilterModal.classList.remove('show');
+        setTimeout(() => {
+            dateFilterModal.style.display = 'none';
+        }, 300);
+    });
+
+    dateOptionBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            dateOptionBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    applyDateFilter.addEventListener('click', function() {
+        const activeFilter = document.querySelector('.date-option-btn.active');
+        const filterDays = activeFilter.getAttribute('data-days');
+        
+        dateFilterModal.classList.remove('show');
+        setTimeout(() => {
+            dateFilterModal.style.display = 'none';
+        }, 300);
+
+        filterTransactions(searchInput.value.toLowerCase().trim(), filterDays);
+    });
+
     // Functions
     function updateUserProfile(user) {
-        document.getElementById('profileName').textContent = user.first_name || 'User';
+        const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+        document.getElementById('profileName').textContent = fullName || 'User';
         document.getElementById('userName').textContent = '@' + (user.username || 'username');
         document.getElementById('userId').textContent = 'ID: ' + user.id;
         
@@ -995,32 +1047,32 @@
             profilePic.style.backgroundSize = 'cover';
             profilePic.textContent = '';
         } else {
-            profilePic.textContent = user.first_name ? user.first_name.charAt(0).toUpperCase() : 'U';
+            const initials = (user.first_name ? user.first_name.charAt(0).toUpperCase() : '') + 
+                           (user.last_name ? user.last_name.charAt(0).toUpperCase() : '');
+            profilePic.textContent = initials || 'U';
         }
     }
 
     function loadUserData(userId) {
-        // Load balance data
+        // Load balance data - userBalance collection থেকে
         db.collection('userBalance').doc(userId.toString()).get()
             .then((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
-                    balanceAmount.textContent = '$' + (data.balance || '0.00');
-                    totalEarning.textContent = '$' + (data.totalEarning || '0.00');
-                    totalWithdraw.textContent = '$' + (data.totalWithdraw || '0.00');
+                    const mainBalance = data.mainBalance || data.balance || 0;
+                    const totalEarningValue = data.totalEarning || 0;
+                    const totalWithdrawValue = data.totalWithdraw || 0;
                     
-                    if (data.lastUpdate) {
-                        const date = data.lastUpdate.toDate();
-                        lastUpdateDate.textContent = date.toLocaleDateString();
-                    } else {
-                        lastUpdateDate.textContent = new Date().toLocaleDateString();
-                    }
+                    balanceAmount.textContent = '$' + mainBalance.toFixed(2);
+                    totalEarning.textContent = '$' + totalEarningValue.toFixed(2);
+                    totalWithdraw.textContent = '$' + totalWithdrawValue.toFixed(2);
                 } else {
                     // Create initial balance record
                     db.collection('userBalance').doc(userId.toString()).set({
-                        balance: 0.00,
-                        availableBalance: 0.00,
-                        lastUpdate: new Date()
+                        mainBalance: 0.00,
+                        totalEarning: 0.00,
+                        totalWithdraw: 0.00,
+                        lastUpdated: new Date()
                     });
                 }
             })
@@ -1034,24 +1086,20 @@
     }
 
     function loadTransactions(userId) {
-        db.collection('transactions')
+        db.collection('userTransaction')
             .where('userId', '==', userId.toString())
             .orderBy('date', 'desc')
-            .limit(10)
             .get()
             .then((querySnapshot) => {
-                transactionsList.innerHTML = '';
-                
-                if (querySnapshot.empty) {
-                    transactionsList.innerHTML = '<div class="loading">No transactions yet</div>';
-                    return;
-                }
-
+                allTransactions = [];
                 querySnapshot.forEach((doc) => {
                     const transaction = doc.data();
-                    const transactionItem = createTransactionElement(transaction);
-                    transactionsList.appendChild(transactionItem);
+                    transaction.id = doc.id;
+                    allTransactions.push(transaction);
                 });
+                
+                filteredTransactions = [...allTransactions];
+                displayTransactions(filteredTransactions);
             })
             .catch((error) => {
                 console.error("Error loading transactions:", error);
@@ -1059,30 +1107,113 @@
             });
     }
 
+    function displayTransactions(transactions) {
+        transactionsList.innerHTML = '';
+        
+        if (transactions.length === 0) {
+            transactionsList.innerHTML = '<div class="loading">No transactions found</div>';
+            return;
+        }
+
+        transactions.forEach((transaction) => {
+            const transactionItem = createTransactionElement(transaction);
+            transactionsList.appendChild(transactionItem);
+        });
+    }
+
     function createTransactionElement(transaction) {
         const div = document.createElement('div');
         div.className = 'transaction-item';
+        div.setAttribute('data-transaction-id', transaction.id);
         
-        const isIncome = transaction.type === 'deposit';
+        const isIncome = transaction.amount > 0;
         const iconClass = isIncome ? 'income' : 'expense';
         const icon = isIncome ? 'fa-plus' : 'fa-minus';
         const amountPrefix = isIncome ? '+' : '-';
+        const amount = Math.abs(transaction.amount);
         
         div.innerHTML = `
             <div class="transaction-icon ${iconClass}">
                 <i class="fa-solid ${icon}"></i>
             </div>
             <div class="transaction-details">
-                <div class="transaction-title">${transaction.description || transaction.type}</div>
+                <div class="transaction-amount ${iconClass}">${amountPrefix}$${amount.toFixed(2)}</div>
                 <div class="transaction-date">${transaction.date.toDate().toLocaleDateString()}</div>
             </div>
-            <div class="transaction-amount ${iconClass}">${amountPrefix}$${transaction.amount}</div>
+            <div class="transaction-status">
+                <i class="fas fa-info-circle"></i>
+            </div>
         `;
+        
+        // Add click event for transaction details
+        div.addEventListener('click', () => {
+            showTransactionDetails(transaction);
+        });
         
         return div;
     }
 
-    // পুরানো ফাংশনগুলো রিমুভ করে দিয়েছি - নতুন লিংক সিস্টেম উপরে ইমপ্লিমেন্ট করা হয়েছে
+    function showTransactionDetails(transaction) {
+        const isIncome = transaction.amount > 0;
+        const amountPrefix = isIncome ? '+' : '-';
+        const amount = Math.abs(transaction.amount);
+        
+        document.getElementById('transactionDetailAmount').textContent = 
+            `${amountPrefix}$${amount.toFixed(2)}`;
+        document.getElementById('transactionDetailAmount').style.color = 
+            isIncome ? 'var(--accent)' : '#ef4444';
+        
+        document.getElementById('transactionDetailId').textContent = 
+            transaction.id || 'N/A';
+        document.getElementById('transactionDetailDate').textContent = 
+            transaction.date.toDate().toLocaleString();
+        document.getElementById('transactionDetailStatus').textContent = 
+            transaction.status || 'Completed';
+        document.getElementById('transactionDetailFee').textContent = 
+            `$${(transaction.fee || 0).toFixed(2)}`;
+        
+        transactionModal.classList.add('show');
+    }
+
+    // Close Transaction Modal
+    closeTransactionModal.addEventListener('click', function() {
+        transactionModal.classList.remove('show');
+    });
+
+    // Copy Transaction ID
+    copyTransactionId.addEventListener('click', function() {
+        const transactionId = document.getElementById('transactionDetailId').textContent;
+        navigator.clipboard.writeText(transactionId).then(() => {
+            showToast('Transaction ID copied!');
+        });
+    });
+
+    // সার্চ এবং ফিল্টার ফাংশন
+    function filterTransactions(searchTerm = '', dateFilter = 'all') {
+        let filtered = allTransactions;
+
+        // Transaction ID দ্বারা সার্চ
+        if (searchTerm) {
+            filtered = filtered.filter(transaction => 
+                (transaction.id && transaction.id.toLowerCase().includes(searchTerm)) ||
+                (transaction.transactionId && transaction.transactionId.toLowerCase().includes(searchTerm))
+            );
+        }
+
+        // তারিখ দ্বারা ফিল্টার
+        if (dateFilter !== 'all') {
+            const filterDate = new Date();
+            filterDate.setDate(filterDate.getDate() - parseInt(dateFilter));
+            
+            filtered = filtered.filter(transaction => {
+                const transactionDate = transaction.date.toDate();
+                return transactionDate >= filterDate;
+            });
+        }
+
+        filteredTransactions = filtered;
+        displayTransactions(filteredTransactions);
+    }
 
     function showToast(message) {
         toastMessage.textContent = message;
