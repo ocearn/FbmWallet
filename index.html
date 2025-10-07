@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexaWallet - Smart Digital Wallet</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #8b5cf6;
+            --accent: #06d6a0;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius: 16px;
+        }
+
+        .dark-mode {
+            --text: #f1f5f9;
+            --text-light: #94a3b8;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            margin-bottom: 20px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .profile-pic {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .profile-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .profile-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-details {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+        }
+
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .theme-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .balance-amount {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .balance-stats {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Quick Actions */
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 25px 0 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .action-btn {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 15px 10px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            color: var(--text);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-5px);
+        }
+
+        .action-btn i {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .action-btn span {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* Search and Filter Section */
+        .search-filter-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: none;
+            border-radius: var(--radius);
+            background: var(--card);
+            color: var(--text);
+            font-size: 0.9rem;
+            box-shadow: var(--shadow);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .filter-btn {
+            background: var(--card);
+            border: none;
+            border-radius: var(--radius);
+            padding: 12px 15px;
+            color: var(--text);
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Date Filter Modal */
+        .date-filter-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1002;
+            backdrop-filter: blur(5px);
+        }
+
+        .date-filter-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border-radius: 20px 20px 0 0;
+            padding: 25px 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .date-filter-modal.show .date-filter-content {
+            transform: translateY(0);
+        }
+
+        .date-filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .date-filter-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .date-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .date-option-btn {
+            background: var(--bg);
+            border: none;
+            border-radius: var(--radius);
+            padding: 15px;
+            text-align: left;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .date-option-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .date-option-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .custom-date-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--text-light);
+            border-radius: var(--radius);
+            background: var(--card);
+            color: var(--text);
+            margin-top: 10px;
+        }
+
+        .apply-filter-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 15px;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border-radius: 20px 20px 0 0;
+            padding: 30px 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        .transfer-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .transfer-option-btn {
+            background: var(--bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .transfer-option-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .transfer-option-btn:hover i {
+            color: white;
+        }
+
+        .transfer-option-btn i {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        .transfer-option-info {
+            text-align: left;
+            flex: 1;
+        }
+
+        .transfer-option-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .transfer-option-desc {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .transfer-option-btn:hover .transfer-option-desc {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Transactions */
+        .transactions {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 80px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+
+        .dark-mode .transaction-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .transaction-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .income {
+            background: rgba(6, 214, 160, 0.2);
+            color: var(--accent);
+        }
+
+        .expense {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .transaction-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .transaction-amount {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .transaction-date {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .transaction-status {
+            font-size: 1.5rem;
+            color: var(--text-light);
+            margin-left: 10px;
+        }
+
+        /* Transaction Details Modal */
+        .transaction-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            backdrop-filter: blur(5px);
+        }
+
+        .transaction-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 30px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: var(--shadow);
+        }
+
+        .transaction-modal.show {
+            display: block;
+        }
+
+        .transaction-detail-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--text);
+        }
+
+        .transaction-detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .dark-mode .transaction-detail-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .transaction-detail-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .transaction-detail-value {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .close-transaction-modal {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 15px;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card);
+            color: var(--text);
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast i {
+            color: var(--accent);
+            font-size: 1.2rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light);
+        }
+
+        .no-transactions {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+
+        .no-transactions i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header with User Profile -->
+        <header>
+            <div class="user-profile">
+                <div class="profile-pic" id="profilePic">U</div>
+                <div class="profile-info">
+                    <div class="profile-name" id="profileName">Loading...</div>
+                    <div class="profile-details">
+                        <span id="userName">@username</span> • 
+                        <span id="userId">ID: ...</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Balance Card -->
+        <div class="balance-card fade-in">
+            <div class="balance-header">
+                <div class="balance-label">Total Balance</div>
+                <div class="theme-icon" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </div>
+            </div>
+            <div class="balance-amount" id="balanceAmount">$0.00</div>
+            <div class="balance-stats">
+                <div class="stat">
+                    <div class="stat-label">Total Earning</div>
+                    <div class="stat-value" id="totalEarning">$0.00</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Total Withdraw</div>
+                    <div class="stat-value" id="totalWithdraw">$0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section-title">Quick Actions</div>
+        <div class="quick-actions">
+            <button class="action-btn" id="transferBtn">
+                <i class="fas fa-paper-plane"></i>
+                <span>Transfer</span>
+            </button>
+            <button class="action-btn" id="depositBtn">
+                <i class="fas fa-download"></i>
+                <span>Deposit</span>
+            </button>
+            <button class="action-btn" id="withdrawBtn">
+                <i class="fas fa-mobile-alt"></i>
+                <span>Withdraw</span>
+            </button>
+        </div>
+
+        <!-- Transfer Modal -->
+        <div class="modal" id="transferModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">Transfer Money</div>
+                    <button class="close-modal" id="closeTransferModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="transfer-options">
+                    <button class="transfer-option-btn" id="transferFriendBtn">
+                        <i class="fas fa-user-friends"></i>
+                        <div class="transfer-option-info">
+                            <div class="transfer-option-title">Transfer to Friend</div>
+                            <div class="transfer-option-desc">Send money to your friends</div>
+                        </div>
+                    </button>
+                    <button class="transfer-option-btn" id="transferAgentBtn">
+                        <i class="fas fa-user-tie"></i>
+                        <div class="transfer-option-info">
+                            <div class="transfer-option-title">Transfer to Agent</div>
+                            <div class="transfer-option-desc">Send money to authorized agents</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Filter Modal -->
+        <div class="date-filter-modal" id="dateFilterModal">
+            <div class="date-filter-content">
+                <div class="date-filter-header">
+                    <div class="date-filter-title">Filter by Date</div>
+                    <button class="close-modal" id="closeDateFilterModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="date-options">
+                    <button class="date-option-btn" data-days="7">Last 7 Days</button>
+                    <button class="date-option-btn" data-days="30">Last 30 Days</button>
+                    <button class="date-option-btn" data-days="90">Last 3 Months</button>
+                    <button class="date-option-btn" data-days="365">Last 1 Year</button>
+                    <button class="date-option-btn active" data-days="all">All Time</button>
+                </div>
+                <input type="date" class="custom-date-input" id="customDateInput">
+                <button class="apply-filter-btn" id="applyDateFilter">Apply Filter</button>
+            </div>
+        </div>
+
+        <!-- Transaction Details Modal -->
+        <div class="transaction-modal" id="transactionModal">
+            <div class="transaction-modal-content">
+                <div class="transaction-detail-amount" id="transactionDetailAmount">$0.00</div>
+                
+                <div class="transaction-detail-item">
+                    <div class="transaction-detail-label">Transaction ID</div>
+                    <div class="transaction-detail-value">
+                        <span id="transactionDetailId">N/A</span>
+                        <button class="copy-btn" id="copyTransactionId">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="transaction-detail-item">
+                    <div class="transaction-detail-label">Date</div>
+                    <div class="transaction-detail-value" id="transactionDetailDate">N/A</div>
+                </div>
+                
+                <div class="transaction-detail-item">
+                    <div class="transaction-detail-label">Status</div>
+                    <div class="transaction-detail-value" id="transactionDetailStatus">N/A</div>
+                </div>
+                
+                <div class="transaction-detail-item">
+                    <div class="transaction-detail-label">Fee</div>
+                    <div class="transaction-detail-value" id="transactionDetailFee">$0.00</div>
+                </div>
+                
+                <button class="close-transaction-modal" id="closeTransactionModal">Close</button>
+            </div>
+        </div>
+
+        <!-- Transactions Section with Search -->
+    <!--    <div class="section-title">
+            <span>All Transactions</span>
+        </div>-->
+        
+        <div class="search-filter-section">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search by Transaction ID...">
+                <div class="search-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            <button class="filter-btn" id="dateFilterBtn">
+                <i class="fas fa-calendar-alt"></i>
+            </button>
+        </div>
+
+        <div class="transactions" id="transactionsList">
+            <div class="loading">Loading transactions...</div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Welcome to NexaWallet!</span>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVSA8ip1vBTs_HFZGkXAPct0v-gU6CzG0",
+            authDomain: "testingpp-935bc.firebaseapp.com",
+            databaseURL: "https://testingpp-935bc-default-rtdb.firebaseio.com",
+            projectId: "testingpp-935bc",
+            storageBucket: "testingpp-935bc.firebasestorage.app",
+            messagingSenderId: "303082886262",
+            appId: "1:303082886262:web:0be011a2659985c3a1bb57",
+            measurementId: "G-TVG8YCF2N1"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Telegram Web App
+        const tg = window.Telegram.WebApp;
+        let userData = null;
+        let allTransactions = [];
+        let filteredTransactions = [];
+
+        // Initialize Telegram Web App
+        tg.expand();
+        tg.ready();
+
+        // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
+        const transferBtn = document.getElementById('transferBtn');
+        const depositBtn = document.getElementById('depositBtn');
+        const withdrawBtn = document.getElementById('withdrawBtn');
+        const transferModal = document.getElementById('transferModal');
+        const closeTransferModal = document.getElementById('closeTransferModal');
+        const transferFriendBtn = document.getElementById('transferFriendBtn');
+        const transferAgentBtn = document.getElementById('transferAgentBtn');
+        const balanceAmount = document.getElementById('balanceAmount');
+        const totalEarning = document.getElementById('totalEarning');
+        const totalWithdraw = document.getElementById('totalWithdraw');
+        const transactionsList = document.getElementById('transactionsList');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const transactionModal = document.getElementById('transactionModal');
+        const closeTransactionModal = document.getElementById('closeTransactionModal');
+        const copyTransactionId = document.getElementById('copyTransactionId');
+        const searchInput = document.getElementById('searchInput');
+        const dateFilterBtn = document.getElementById('dateFilterBtn');
+        const dateFilterModal = document.getElementById('dateFilterModal');
+        const closeDateFilterModal = document.getElementById('closeDateFilterModal');
+        const dateOptionBtns = document.querySelectorAll('.date-option-btn');
+        const customDateInput = document.getElementById('customDateInput');
+        const applyDateFilter = document.getElementById('applyDateFilter');
+
+        // Get user data from Telegram and initialize
+        if (tg.initDataUnsafe.user) {
+            userData = tg.initDataUnsafe.user;
+            saveUserProfile(userData);
+            updateUserProfile(userData);
+            loadUserData(userData.id);
+        } else {
+            // Fallback for development
+            userData = {
+                id: 123456789,
+                first_name: "Demo",
+                last_name: "User",
+                username: "demo_user",
+                photo_url: null
+            };
+            saveUserProfile(userData);
+            updateUserProfile(userData);
+            loadUserData(userData.id);
+        }
+
+        // ১. প্রোফাইল সেভ এবং আপডেট ফাংশন
+        function saveUserProfile(user) {
+            const userRef = db.collection('users').doc(user.id.toString());
+            
+            const userData = {
+                firstName: user.first_name || '',
+                lastName: user.last_name || '',
+                username: user.username || '',
+                photoUrl: user.photo_url || '',
+                joinDate: new Date(),
+                lastUpdated: new Date()
+            };
+            
+            userRef.set(userData, { merge: true })
+                .then(() => {
+                    console.log("User profile saved successfully");
+                })
+                .catch((error) => {
+                    console.error("Error saving user profile:", error);
+                });
+        }
+
+        function updateUserProfile(user) {
+            const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+            document.getElementById('profileName').textContent = fullName || 'User';
+            document.getElementById('userName').textContent = '@' + (user.username || 'username');
+            document.getElementById('userId').textContent = 'ID: ' + user.id;
+            
+            const profilePic = document.getElementById('profilePic');
+            if (user.photo_url) {
+                profilePic.style.backgroundImage = `url(${user.photo_url})`;
+                profilePic.style.backgroundSize = 'cover';
+                profilePic.textContent = '';
+            } else {
+                const initials = (user.first_name ? user.first_name.charAt(0).toUpperCase() : '') + 
+                               (user.last_name ? user.last_name.charAt(0).toUpperCase() : '');
+                profilePic.textContent = initials || 'U';
+            }
+        }
+
+        // ২. ব্যালেন্স লোড ফাংশন
+        function loadUserData(userId) {
+            // Load balance data
+            db.collection('userBalance').doc(userId.toString()).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        balanceAmount.textContent = '$' + (data.mainBalance || '0.00');
+                        totalEarning.textContent = '$' + (data.totalEarning || '0.00');
+                        totalWithdraw.textContent = '$' + (data.totalWithdraw || '0.00');
+                    } else {
+                        // Create initial balance record
+                        db.collection('userBalance').doc(userId.toString()).set({
+                            mainBalance: 0.00,
+                            totalEarning: 0.00,
+                            totalWithdraw: 0.00,
+                            lastUpdated: new Date()
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error loading balance:", error);
+                    showToast('Error loading balance');
+                });
+
+            // Load transactions
+            loadTransactions(userId);
+        }
+
+        // ৪. ট্রানজেকশন লোড ফাংশন
+        function loadTransactions(userId) {
+            db.collection('userTransaction')
+                .where('userId', '==', userId.toString())
+                .orderBy('date', 'desc')
+                .get()
+                .then((querySnapshot) => {
+                    allTransactions = [];
+                    querySnapshot.forEach((doc) => {
+                        const transaction = doc.data();
+                        transaction.id = doc.id;
+                        allTransactions.push(transaction);
+                    });
+                    
+                    filteredTransactions = [...allTransactions];
+                    displayTransactions(filteredTransactions);
+                })
+                .catch((error) => {
+                    console.error("Error loading transactions:", error);
+                    transactionsList.innerHTML = '<div class="loading">Error loading transactions</div>';
+                });
+        }
+
+        function displayTransactions(transactions) {
+            transactionsList.innerHTML = '';
+            
+            if (transactions.length === 0) {
+                transactionsList.innerHTML = `
+                    <div class="no-transactions">
+                        <i class="fas fa-receipt"></i>
+                        <div>No transactions found</div>
+                    </div>
+                `;
+                return;
+            }
+
+            transactions.forEach((transaction) => {
+                const transactionItem = createTransactionElement(transaction);
+                transactionsList.appendChild(transactionItem);
+            });
+        }
+
+        function createTransactionElement(transaction) {
+            const div = document.createElement('div');
+            div.className = 'transaction-item';
+            
+            const isIncome = transaction.amount > 0;
+            const iconClass = isIncome ? 'income' : 'expense';
+            const icon = isIncome ? 'fa-plus' : 'fa-minus';
+            const amountPrefix = isIncome ? '+' : '-';
+            const amount = Math.abs(transaction.amount);
+            
+            div.innerHTML = `
+                <div class="transaction-icon ${iconClass}">
+                    <i class="fa-solid ${icon}"></i>
+                </div>
+                <div class="transaction-details">
+                    <div class="transaction-amount ${iconClass}">${amountPrefix}$${amount.toFixed(2)}</div>
+                    <div class="transaction-date">${transaction.date.toDate().toLocaleDateString()}</div>
+                </div>
+                <div class="transaction-status">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+            `;
+            
+            // Add click event for transaction details
+            div.addEventListener('click', () => {
+                showTransactionDetails(transaction);
+            });
+            
+            return div;
+        }
+
+        function showTransactionDetails(transaction) {
+            const isIncome = transaction.amount > 0;
+            const amountPrefix = isIncome ? '+' : '-';
+            const amount = Math.abs(transaction.amount);
+            
+            document.getElementById('transactionDetailAmount').textContent = 
+                `${amountPrefix}$${amount.toFixed(2)}`;
+            document.getElementById('transactionDetailAmount').style.color = 
+                isIncome ? 'var(--accent)' : '#ef4444';
+            
+            document.getElementById('transactionDetailId').textContent = 
+                transaction.transactionId || transaction.id;
+            document.getElementById('transactionDetailDate').textContent = 
+                transaction.date.toDate().toLocaleString();
+            document.getElementById('transactionDetailStatus').textContent = 
+                transaction.status || 'Completed';
+            document.getElementById('transactionDetailFee').textContent = 
+                `$${(transaction.fee || 0).toFixed(2)}`;
+            
+            transactionModal.classList.add('show');
+        }
+
+        // সার্চ ফাংশনালিটি
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            filterTransactions(searchTerm);
+        });
+
+        function filterTransactions(searchTerm = '', dateFilter = 'all') {
+            let filtered = allTransactions;
+
+            // Transaction ID দ্বারা সার্চ
+            if (searchTerm) {
+                filtered = filtered.filter(transaction => 
+                    (transaction.transactionId && transaction.transactionId.toLowerCase().includes(searchTerm)) ||
+                    (transaction.id && transaction.id.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            // তারিখ দ্বারা ফিল্টার
+            if (dateFilter !== 'all') {
+                const filterDate = new Date();
+                filterDate.setDate(filterDate.getDate() - parseInt(dateFilter));
+                
+                filtered = filtered.filter(transaction => {
+                    const transactionDate = transaction.date.toDate();
+                    return transactionDate >= filterDate;
+                });
+            }
+
+            filteredTransactions = filtered;
+            displayTransactions(filteredTransactions);
+        }
+
+        // তারিখ ফিল্টার ফাংশনালিটি
+        dateFilterBtn.addEventListener('click', function() {
+            dateFilterModal.style.display = 'block';
+            setTimeout(() => {
+                dateFilterModal.classList.add('show');
+            }, 10);
+        });
+
+        closeDateFilterModal.addEventListener('click', function() {
+            dateFilterModal.classList.remove('show');
+            setTimeout(() => {
+                dateFilterModal.style.display = 'none';
+            }, 300);
+        });
+
+        dateOptionBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                dateOptionBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        applyDateFilter.addEventListener('click', function() {
+            const activeFilter = document.querySelector('.date-option-btn.active');
+            const filterDays = activeFilter.getAttribute('data-days');
+            
+            dateFilterModal.classList.remove('show');
+            setTimeout(() => {
+                dateFilterModal.style.display = 'none';
+            }, 300);
+
+            filterTransactions(searchInput.value.toLowerCase().trim(), filterDays);
+        });
+
+        // Theme Toggle
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDarkMode);
+            
+            const themeIcon = themeToggle.querySelector('i');
+            themeIcon.className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+        });
+
+        // Check for saved theme preference
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (savedDarkMode) {
+                document.body.classList.add('dark-mode');
+                const themeIcon = themeToggle.querySelector('i');
+                themeIcon.className = 'fas fa-sun';
+            }
+        });
+
+        // Transfer Button Click - Modal Open
+        transferBtn.addEventListener('click', function() {
+            transferModal.style.display = 'block';
+            setTimeout(() => {
+                transferModal.classList.add('show');
+            }, 10);
+        });
+
+        // Close Transfer Modal
+        closeTransferModal.addEventListener('click', function() {
+            transferModal.classList.remove('show');
+            setTimeout(() => {
+                transferModal.style.display = 'none';
+            }, 300);
+        });
+
+        // Transfer Friend Button - একইভাবে তথ্য পাঠানো
+        transferFriendBtn.addEventListener('click', function() {
+            openTransferPage('friend');
+        });
+
+        // Transfer Agent Button - একইভাবে তথ্য পাঠানো
+        transferAgentBtn.addEventListener('click', function() {
+            openTransferPage('agent');
+        });
+
+        // Deposit Button - নতুন পেজে redirect
+        depositBtn.addEventListener('click', function() {
+            openActionPage('deposit');
+        });
+
+        // Withdraw Button - নতুন পেজে redirect
+        withdrawBtn.addEventListener('click', function() {
+            openActionPage('withdraw');
+        });
+
+        // Close Transaction Modal
+        closeTransactionModal.addEventListener('click', function() {
+            transactionModal.classList.remove('show');
+        });
+
+        // Copy Transaction ID
+        copyTransactionId.addEventListener('click', function() {
+            const transactionId = document.getElementById('transactionDetailId').textContent;
+            navigator.clipboard.writeText(transactionId).then(() => {
+                showToast('Transaction ID copied!');
+            });
+        });
+
+        // Functions for page redirection - সবগুলোতেই একইভাবে তথ্য পাঠানো
+        function openTransferPage(type) {
+            const baseUrl = 'https://yourdomain.com';
+            const params = new URLSearchParams({
+                userId: userData.id,
+                userName: userData.username || '',
+                firstName: userData.first_name || '',
+                lastName: userData.last_name || '',
+                type: type
+            });
+            
+            window.location.href = `${baseUrl}/transfer.html?${params.toString()}`;
+        }
+
+        function openActionPage(action) {
+            const baseUrl = 'https://yourdomain.com';
+            const params = new URLSearchParams({
+                userId: userData.id,
+                userName: userData.username || '',
+                firstName: userData.first_name || '',
+                lastName: userData.last_name || '',
+                action: action
+            });
+            
+            window.location.href = `${baseUrl}/${action}.html?${params.toString()}`;
+        }
+
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Show welcome toast
+        setTimeout(() => {
+            showToast('Welcome to NexaWallet!');
+        }, 1000);
+    </script>
+</body>
+</html>
