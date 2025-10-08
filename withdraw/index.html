@@ -922,6 +922,74 @@
             align-items: center;
             gap: 5px;
         }
+
+        /* Password Reset Button */
+        .password-reset-btn {
+            background: var(--warning);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: var(--shadow);
+            margin-left: 10px;
+        }
+
+        /* Password Reset Modal */
+        .password-reset-modal .modal-content {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 30px 20px;
+            max-width: 400px;
+            margin: 0 auto;
+            position: relative;
+            top: 50%;
+            transform: translateY(-50%) scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .password-reset-modal.show .modal-content {
+            transform: translateY(-50%) scale(1);
+        }
+
+        .reset-steps {
+            margin: 20px 0;
+            padding: 15px;
+            background: var(--bg);
+            border-radius: var(--radius);
+        }
+
+        .reset-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: var(--radius);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .reset-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-number {
+            background: var(--primary);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -946,6 +1014,9 @@
         <!-- Header with User Profile -->
         <header>
             <div class="user-profile">
+                <button class="back-btn" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
                 <div class="profile-pic" id="profilePic">U</div>
                 <div class="profile-info">
                     <div class="profile-name" id="profileName">Loading...</div>
@@ -954,6 +1025,9 @@
                         <span id="userId">ID: ...</span>
                     </div>
                 </div>
+                <button class="password-reset-btn" id="passwordResetBtn" title="Reset Password">
+                    <i class="fas fa-key"></i>
+                </button>
             </div>
         </header>
 
@@ -961,9 +1035,6 @@
         <div class="guide-section">
             <div class="section-title">
                 <span><i class="fas fa-play-circle"></i> How to Withdraw</span>
-                <button class="back-btn" onclick="goBack()">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
             </div>
             
             <div class="video-container">
@@ -1122,6 +1193,51 @@
                     <i class="fas fa-check"></i> Confirm Withdrawal
                 </button>
             </form>
+        </div>
+    </div>
+
+    <!-- Password Reset Modal -->
+    <div class="modal password-reset-modal" id="passwordResetModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Reset Your Password</div>
+                <button class="close-modal" id="closePasswordReset">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div style="text-align: center; margin-bottom: 20px; color: var(--text-light); font-size: 0.9rem;">
+                <i class="fas fa-key" style="color: var(--warning); font-size: 2rem; margin-bottom: 10px;"></i>
+                <p>To reset your password, please contact our support team on Telegram.</p>
+            </div>
+            
+            <div class="reset-steps">
+                <div class="reset-step">
+                    <div class="step-number">1</div>
+                    <div>Click the button below to open Telegram</div>
+                </div>
+                <div class="reset-step">
+                    <div class="step-number">2</div>
+                    <div>Send your User ID and request for password reset</div>
+                </div>
+                <div class="reset-step">
+                    <div class="step-number">3</div>
+                    <div>Our support team will reset your password</div>
+                </div>
+            </div>
+            
+            <div style="background: var(--bg); padding: 15px; border-radius: var(--radius); margin-bottom: 20px;">
+                <div style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 5px;">Your User ID:</div>
+                <div style="font-family: monospace; font-weight: bold; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span id="resetUserId">Loading...</span>
+                    <button class="copy-btn" id="copyUserIdBtn">
+                        <i class="far fa-copy"></i> Copy
+                    </button>
+                </div>
+            </div>
+            
+            <button class="btn btn-accent" id="openTelegramBtn">
+                <i class="fab fa-telegram"></i> Open Telegram Support
+            </button>
         </div>
     </div>
 
@@ -1370,6 +1486,7 @@
             document.getElementById('profileName').textContent = fullName || 'User';
             document.getElementById('userName').textContent = '@' + (userData.username || 'username');
             document.getElementById('userId').textContent = 'ID: ' + userData.chatId;
+            document.getElementById('resetUserId').textContent = userData.chatId;
             
             const profilePic = document.getElementById('profilePic');
             if (userData.photoUrl) {
@@ -1492,6 +1609,12 @@
             document.getElementById('passwordSetupForm').addEventListener('submit', savePassword);
             document.getElementById('passwordVerifyForm').addEventListener('submit', processWithdrawal);
             document.getElementById('closePasswordVerify').addEventListener('click', closePasswordVerify);
+            
+            // Password reset
+            document.getElementById('passwordResetBtn').addEventListener('click', showPasswordResetModal);
+            document.getElementById('closePasswordReset').addEventListener('click', closePasswordResetModal);
+            document.getElementById('openTelegramBtn').addEventListener('click', openTelegramSupport);
+            document.getElementById('copyUserIdBtn').addEventListener('click', copyUserId);
             
             // Success modal
             document.getElementById('backHomeBtn').addEventListener('click', showHomePage);
@@ -1700,6 +1823,38 @@
             setTimeout(() => {
                 document.getElementById('passwordVerifyModal').style.display = 'none';
             }, 300);
+        }
+
+        // Password Reset Modal
+        function showPasswordResetModal() {
+            document.getElementById('passwordResetModal').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('passwordResetModal').classList.add('show');
+            }, 10);
+        }
+
+        function closePasswordResetModal() {
+            document.getElementById('passwordResetModal').classList.remove('show');
+            setTimeout(() => {
+                document.getElementById('passwordResetModal').style.display = 'none';
+            }, 300);
+        }
+
+        function openTelegramSupport() {
+            const userId = userData.chatId;
+            const message = `Hello! I need to reset my password. My User ID is: ${userId}`;
+            const telegramUrl = `https://t.me/your_support_bot?start=reset_${userId}`;
+            
+            window.open(telegramUrl, '_blank');
+            closePasswordResetModal();
+            showAlert('Telegram Opened', 'Please send your request to our support team', 'info');
+        }
+
+        function copyUserId() {
+            const userId = userData.chatId;
+            navigator.clipboard.writeText(userId).then(() => {
+                showAlert('Copied!', 'User ID copied to clipboard', 'success');
+            });
         }
 
         // Save Password
