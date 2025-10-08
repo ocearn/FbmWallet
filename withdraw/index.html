@@ -831,7 +831,7 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
-        /* Insufficient Balance Alert */
+        /* Insufficient Balance Alert - Updated with Close Button */
         .insufficient-balance-alert {
             position: fixed;
             bottom: -100%;
@@ -849,6 +849,38 @@
             bottom: 0;
         }
 
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .alert-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--warning);
+        }
+
+        .close-alert-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-alert-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
         .alert-content {
             text-align: center;
         }
@@ -857,13 +889,6 @@
             font-size: 3rem;
             color: var(--warning);
             margin-bottom: 15px;
-        }
-
-        .alert-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--warning);
         }
 
         .alert-message {
@@ -887,6 +912,16 @@
             opacity: 0;
             z-index: 1999;
         }
+
+        /* History Item Improved */
+        .history-payment-method {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
     </style>
 </head>
 <body>
@@ -897,14 +932,11 @@
                 <i class="fas fa-ban"></i>
             </div>
             <h2 class="block-title">Account Permanently Blocked</h2>
-            <p class="block-message">Your account has been permanently blocked from using the withdrawal service. This action cannot be reversed. Please contact support for more information.</p>
+            <p class="block-message">Your account has been permanently blocked from using the withdrawal service. This action cannot be reversed.</p>
             <div class="block-buttons">
-                <a href="https://t.me/your_support_group" class="block-btn telegram" target="_blank">
-                    <i class="fab fa-telegram"></i> Contact Support
-                </a>
-                <a href="https://t.me/your_channel" class="block-btn channel" target="_blank">
-                    <i class="fab fa-telegram"></i> Official Channel
-                </a>
+                <button class="block-btn back" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i> Go Back
+                </button>
             </div>
         </div>
     </div>
@@ -1137,15 +1169,20 @@
         </div>
     </div>
 
-    <!-- Insufficient Balance Alert -->
+    <!-- Insufficient Balance Alert with Close Button -->
     <div class="insufficient-balance-alert" id="insufficientBalanceAlert">
+        <div class="alert-header">
+            <div class="alert-title">Insufficient Balance</div>
+            <button class="close-alert-btn" id="closeBalanceAlert">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
         <div class="alert-content">
             <div class="alert-icon">
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
-            <div class="alert-title">Insufficient Balance</div>
             <div class="alert-message">
-                You don't have enough balance to withdraw. Please deposit first.
+                You don't have enough balance to withdraw. Please deposit first to continue with your withdrawal request.
             </div>
             <button class="btn btn-accent" id="depositBtn">
                 <i class="fas fa-download"></i> Deposit Now
@@ -1172,7 +1209,7 @@
 
         // Telegram Bot Configuration
         const BOT_TOKEN = "7673657711:AAG9aHlpI8_Egvwi0fY9rxA4qyEfqOw16nU";
-        const ADMIN_CHANNEL_ID = "-1002314597186";
+        const ADMIN_CHANNEL_ID = "-10023145971866";
         const BOT_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
 
         // Telegram Web App
@@ -1195,31 +1232,31 @@
                 pattern: "^01[3-9][0-9]{8}$", 
                 placeholder: "01XXXXXXXXX", 
                 label: "Bkash Number",
-                logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/BKash_logo.svg/1200px-BKash_logo.svg.png"
+                logo: "https://i.ibb.co/jPr3zzT5/bKash.png"
             },
             Nagad: { 
                 pattern: "^01[3-9][0-9]{8}$", 
                 placeholder: "01XXXXXXXXX", 
                 label: "Nagad Number",
-                logo: "https://www.nagad.com.bd/assets/images/logo/nagad-logo.png"
+                logo: "https://i.ibb.co/ZzfbKbrz/nagad.png"
             },
             Rocket: { 
                 pattern: "^01[3-9][0-9]{8}$", 
                 placeholder: "01XXXXXXXXX", 
                 label: "Rocket Number",
-                logo: "https://www.dutchbanglabank.com/images/rocket.png"
+                logo: "https://i.ibb.co/0pGsRX5m/rocket.png"
             },
             Binance: { 
                 pattern: "^\\d{6,11}$", 
                 placeholder: "ID1042457700", 
                 label: "Binance ID",
-                logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png"
+                logo: "https://i.ibb.co/FbzYZPst/binance.pngg"
             },
             Payeer: { 
                 pattern: "^P\\d{7,10}$", 
                 placeholder: "P1127766562", 
                 label: "Payeer ID",
-                logo: "https://payeer.com/design/images/logo.svg"
+                logo: "https://i.ibb.co/38hcZcS/payeer.png"
             }
         };
 
@@ -1235,18 +1272,18 @@
 
         // Initialize App
         async function initializeApp() {
+            // Check if user is blocked first - IMMEDIATE PERMANENT BLOCK CHECK
+            const isBlocked = await checkUserBlockStatus();
+            if (isBlocked) {
+                showBlockOverlay();
+                return; // Stop further execution if user is blocked
+            }
+
             // Set theme from URL parameter
             const urlParams = new URLSearchParams(window.location.search);
             const theme = urlParams.get('theme');
             if (theme === 'dark') {
                 document.body.classList.add('dark-mode');
-            }
-
-            // Check if user is blocked first - PERMANENT BLOCK CHECK
-            const isBlocked = await checkUserBlockStatus();
-            if (isBlocked) {
-                showBlockOverlay();
-                return; // Stop further execution if user is blocked
             }
 
             // Telegram WebApp Expansion
@@ -1287,19 +1324,27 @@
             setupEventListeners();
         }
 
-        // Check User Block Status from userBlockList collection - PERMANENT BLOCK
+        // Check User Block Status from userBlockList collection - IMMEDIATE CHECK
         async function checkUserBlockStatus() {
             try {
-                if (!userData?.chatId) {
-                    // Wait for user data to be available
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                // First get user data from Telegram
+                let tgUser = null;
+                if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    tgUser = tg.initDataUnsafe.user;
                 }
                 
-                const blockDoc = await db.collection('userBlockList').doc(userData?.chatId || '').get();
+                // Fallback for testing
+                if (!tgUser) {
+                    tgUser = { id: "123456789" };
+                }
+                
+                const userId = tgUser.id.toString();
+                const blockDoc = await db.collection('userBlockList').doc(userId).get();
                 
                 if (blockDoc.exists) {
                     const blockData = blockDoc.data();
                     if (blockData.userBlock === true) {
+                        console.log('User is permanently blocked');
                         return true; // User is permanently blocked
                     }
                 }
@@ -1310,10 +1355,10 @@
             }
         }
 
-        // Show Block Overlay - PERMANENT BLOCK (No Close Button)
+        // Show Block Overlay - PERMANENT BLOCK (No Close Button, Only Back Button)
         function showBlockOverlay() {
             document.getElementById('blockOverlay').style.display = 'flex';
-            // Disable all other page content
+            // Hide all other content
             document.getElementById('homePage').style.display = 'none';
             document.getElementById('amountPage').style.display = 'none';
             document.getElementById('paymentPage').style.display = 'none';
@@ -1453,8 +1498,9 @@
             document.getElementById('joinGroupBtn').addEventListener('click', joinGroup);
             document.getElementById('copySuccessId').addEventListener('click', copyTransactionId);
             
-            // Deposit button
+            // Deposit button and close alert
             document.getElementById('depositBtn').addEventListener('click', goToDeposit);
+            document.getElementById('closeBalanceAlert').addEventListener('click', closeInsufficientBalanceAlert);
             
             // Amount input
             document.getElementById('withdrawAmount').addEventListener('input', validateAmount);
@@ -1509,6 +1555,11 @@
             document.getElementById('homePage').style.display = 'none';
             document.getElementById('amountPage').style.display = 'none';
             document.getElementById('paymentPage').style.display = 'block';
+        }
+
+        // Close Insufficient Balance Alert
+        function closeInsufficientBalanceAlert() {
+            document.getElementById('insufficientBalanceAlert').classList.remove('show');
         }
 
         // Payment Methods
@@ -1775,6 +1826,9 @@
                     
                     // Show success modal
                     showSuccessModal(transactionId);
+                    
+                    // Reload history to show new request
+                    loadWithdrawHistory();
                 })
                 .catch((error) => {
                     console.error('Error submitting withdrawal:', error);
@@ -1907,7 +1961,7 @@
             window.open('https://t.me/your_group_link', '_blank');
         }
 
-        // Go to Deposit
+        // Go to Deposit with User Data
         function goToDeposit() {
             const baseUrl = 'https://ocearn.github.io/FbmWallet';
             const isDarkMode = document.body.classList.contains('dark-mode');
@@ -1916,6 +1970,7 @@
                 userName: userData.username,
                 firstName: userData.firstName,
                 lastName: userData.lastName,
+                photoUrl: userData.photoUrl || '',
                 action: 'deposit',
                 theme: isDarkMode ? 'dark' : 'light'
             });
@@ -1928,8 +1983,13 @@
             document.getElementById('insufficientBalanceAlert').classList.add('show');
         }
 
-        // Load Withdraw History from userWithdraw collection - IMPROVED
+        // Load Withdraw History from userWithdraw collection - IMPROVED WITH USER SPECIFIC DATA
         function loadWithdrawHistory() {
+            if (!userData || !userData.chatId) {
+                console.error('User data not available');
+                return;
+            }
+
             db.collection('userWithdraw')
                 .where('userId', '==', userData.chatId)
                 .orderBy('createdAt', 'desc')
@@ -1972,16 +2032,15 @@
                 });
         }
 
-        // Create History Item - IMPROVED
+        // Create History Item - IMPROVED WITH BETTER UI
         function createHistoryItem(request, docId) {
             const date = request.createdAt?.toDate ? request.createdAt.toDate() : new Date(request.createdAt);
             const formattedDate = date.toLocaleDateString();
             const formattedTime = date.toLocaleTimeString();
             
-            // Get first payment method for display
-            const primaryMethod = request.paymentMethods && request.paymentMethods.length > 0 
-                ? request.paymentMethods[0] 
-                : { method: 'Unknown', number: 'N/A' };
+            // Get payment methods for display
+            const paymentMethods = request.paymentMethods || [];
+            const primaryMethod = paymentMethods.length > 0 ? paymentMethods[0] : { method: 'Unknown', number: 'N/A' };
             
             const historyItem = document.createElement('div');
             historyItem.className = 'history-item';
@@ -1994,18 +2053,17 @@
                         <i class="fas fa-money-bill-wave"></i> ${request.amount} ৳
                     </span>
                 </div>
-                <div class="history-details">
-                    <div style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 5px;">
-                        <i class="fas fa-wallet"></i> ${primaryMethod.method}: ${primaryMethod.number}
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                        <span class="history-date">
-                            <i class="fas fa-calendar"></i> ${formattedDate} ${formattedTime}
-                        </span>
-                        <span class="history-status status-${request.status}">
-                            ${request.status}
-                        </span>
-                    </div>
+                <div class="history-payment-method">
+                    <i class="fas fa-wallet"></i> ${primaryMethod.method}: ${primaryMethod.number}
+                    ${paymentMethods.length > 1 ? ` +${paymentMethods.length - 1} more` : ''}
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <span class="history-date">
+                        <i class="fas fa-calendar"></i> ${formattedDate} ${formattedTime}
+                    </span>
+                    <span class="history-status status-${request.status}">
+                        ${request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                    </span>
                 </div>
             `;
             
@@ -2025,13 +2083,15 @@
             let paymentMethodsText = '';
             if (request.paymentMethods && request.paymentMethods.length > 0) {
                 paymentMethodsText = request.paymentMethods.map(p => 
-                    `<div style="margin: 5px 0;"><strong>${p.method}:</strong> ${p.number}</div>`
+                    `<div style="margin: 5px 0; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <strong>${p.method}:</strong> ${p.number}
+                    </div>`
                 ).join('');
             }
             
             const detailMessage = `
                 <div style="text-align: left; max-height: 400px; overflow-y: auto;">
-                    <div style="margin-bottom: 15px;">
+                    <div style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px;">
                         <strong>Amount:</strong> ${request.amount}৳<br>
                         <strong>Status:</strong> <span class="status-${request.status}">${request.status}</span><br>
                         <strong>Date:</strong> ${formattedDate}<br>
@@ -2040,7 +2100,7 @@
                     </div>
                     ${paymentMethodsText ? `
                     <div style="margin-bottom: 15px;">
-                        <strong>Payment Methods:</strong>
+                        <strong style="display: block; margin-bottom: 8px;">Payment Methods:</strong>
                         ${paymentMethodsText}
                     </div>
                     ` : ''}
@@ -2055,14 +2115,29 @@
             const searchTerm = document.getElementById('searchHistory').value.toLowerCase();
             const historyItems = document.querySelectorAll('.history-item');
             
+            let foundItems = 0;
+            
             historyItems.forEach(item => {
                 const text = item.textContent.toLowerCase();
                 if (text.includes(searchTerm)) {
                     item.style.display = 'block';
+                    foundItems++;
                 } else {
                     item.style.display = 'none';
                 }
             });
+            
+            // Show no results message if no items found
+            if (foundItems === 0 && searchTerm !== '') {
+                const historyList = document.getElementById('historyList');
+                const noResults = document.createElement('div');
+                noResults.className = 'no-history';
+                noResults.innerHTML = `
+                    <i class="fas fa-search"></i>
+                    <div>No results found for "${searchTerm}"</div>
+                `;
+                historyList.appendChild(noResults);
+            }
         }
 
         // Show Alert - ছোট এবং ডান পাশে কোনায়
