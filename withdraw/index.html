@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexaWallet - Withdraw</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #8b5cf6;
+            --accent: #06d6a0;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius: 16px;
+        }
+
+        .dark-mode {
+            --text: #f1f5f9;
+            --text-light: #94a3b8;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            margin-bottom: 20px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .profile-pic {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .profile-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .profile-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-details {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .back-btn {
+            background: var(--card);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--text);
+            box-shadow: var(--shadow);
+            border: none;
+        }
+
+        /* Guide Section */
+        .guide-section {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: var(--shadow);
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .video-container {
+            width: 100%;
+            height: 200px;
+            border-radius: var(--radius);
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .video-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: var(--radius);
+        }
+
+        .guide-text {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .terms-list {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .terms-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .dark-mode .terms-list li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .terms-list i {
+            color: var(--accent);
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 15px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+        }
+
+        .btn:disabled {
+            background: var(--text-light);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* History Section - পূর্বের সিস্টেম মতো */
+        .history-section {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: var(--shadow);
+        }
+
+        .search-container {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: none;
+            border-radius: var(--radius);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: var(--bg);
+            border-radius: var(--radius);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .history-item:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .history-timestamp {
+            font-size: 12px;
+            color: #888;
+            background: var(--card);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-family: monospace;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-amount {
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 18px;
+        }
+
+        .history-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .history-date {
+            color: #888;
+        }
+
+        .history-status {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .history-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .details-btn {
+            background: var(--primary);
+            padding: 6px 12px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .no-history {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+
+        .no-history i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border-radius: 20px 20px 0 0;
+            padding: 30px 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        /* Password Modal - No Close Button */
+        .password-modal .modal-header {
+            justify-content: center;
+        }
+
+        .password-modal .close-modal {
+            display: none;
+        }
+
+        .password-input-group {
+            margin-bottom: 20px;
+        }
+
+        .password-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .password-input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid var(--text-light);
+            border-radius: var(--radius);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        /* Amount Input Page */
+        .amount-input-page {
+            display: none;
+        }
+
+        .amount-input-container {
+            text-align: center;
+            margin: 50px 0;
+        }
+
+        .amount-label {
+            font-size: 1rem;
+            color: var(--text-light);
+            margin-bottom: 10px;
+        }
+
+        .amount-input {
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            width: 100%;
+            outline: none;
+        }
+
+        .amount-input::placeholder {
+            color: var(--text-light);
+            opacity: 0.5;
+        }
+
+        .balance-info {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 30px;
+        }
+
+        .limit-info {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        /* Payment Method Page - 3 Column Grid */
+        .payment-method-page {
+            display: none;
+        }
+
+        .payment-methods-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .payment-method-card {
+            background: var(--card);
+            border: 2px solid var(--bg);
+            border-radius: var(--radius);
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .payment-method-card.selected {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .payment-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .payment-method-name {
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        /* Payment Input Section - 2 Column Grid */
+        .payment-input-section {
+            margin: 20px 0;
+        }
+
+        .payment-input-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .payment-input-grid input {
+            padding: 12px;
+            border: 1px solid var(--text-light);
+            border-radius: var(--radius);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .add-payment-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .saved-payments {
+            margin-top: 15px;
+        }
+
+        .saved-payment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: var(--radius);
+            margin-bottom: 8px;
+        }
+
+        .saved-payment-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .saved-payment-logo {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .delete-payment-btn {
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        /* Success Modal */
+        .success-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 30px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .success-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .success-details {
+            margin-bottom: 25px;
+        }
+
+        .success-detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .dark-mode .success-detail-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .success-detail-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .success-detail-value {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .success-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .success-buttons .btn {
+            flex: 1;
+        }
+
+        /* Block Overlay - পূর্বের সিস্টেম মতো */
+        .block-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+        }
+
+        .block-container {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: var(--shadow);
+        }
+
+        .block-icon {
+            font-size: 60px;
+            color: var(--error);
+            margin-bottom: 20px;
+        }
+
+        .block-title {
+            font-size: 24px;
+            color: var(--error);
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .block-message {
+            margin-bottom: 25px;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        .block-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .block-btn {
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .block-btn.telegram {
+            background: #0088cc;
+        }
+
+        .block-btn.channel {
+            background: #ff0000;
+        }
+
+        .block-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* Insufficient Balance Alert */
+        .insufficient-balance-alert {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border-radius: var(--radius) var(--radius) 0 0;
+            padding: 25px 20px;
+            box-shadow: var(--shadow);
+            transition: bottom 0.3s ease;
+            z-index: 1001;
+        }
+
+        .insufficient-balance-alert.show {
+            bottom: 0;
+        }
+
+        .alert-content {
+            text-align: center;
+        }
+
+        .alert-icon {
+            font-size: 3rem;
+            color: var(--warning);
+            margin-bottom: 15px;
+        }
+
+        .alert-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--warning);
+        }
+
+        .alert-message {
+            color: var(--text-light);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+    <!-- Block Overlay -->
+    <div class="block-overlay" id="blockOverlay">
+        <div class="block-container">
+            <div class="block-icon">
+                <i class="fas fa-ban"></i>
+            </div>
+            <h2 class="block-title">Account Blocked</h2>
+            <p class="block-message">Your account has been temporarily blocked due to multiple incorrect password attempts. Please contact support to unblock your account.</p>
+            <div class="block-buttons">
+                <a href="https://t.me/your_support_group" class="block-btn telegram" target="_blank">
+                    <i class="fab fa-telegram"></i> Telegram Support
+                </a>
+                <a href="https://t.me/your_channel" class="block-btn channel" target="_blank">
+                    <i class="fab fa-telegram"></i> Telegram Channel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 1: Withdraw Home -->
+    <div class="container" id="homePage">
+        <!-- Header with User Profile -->
+        <header>
+            <div class="user-profile">
+                <div class="profile-pic" id="profilePic">U</div>
+                <div class="profile-info">
+                    <div class="profile-name" id="profileName">Loading...</div>
+                    <div class="profile-details">
+                        <span id="userName">@username</span> • 
+                        <span id="userId">ID: ...</span>
+                    </div>
+                </div>
+            </div>
+            <button class="back-btn" onclick="window.history.back()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+        </header>
+
+        <!-- Guide Section -->
+        <div class="guide-section">
+            <div class="section-title">
+                <i class="fas fa-play-circle"></i> How to Withdraw
+            </div>
+            
+            <div class="video-container">
+                <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                        title="Withdrawal Tutorial" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                </iframe>
+            </div>
+            
+            <div class="guide-text">
+                Follow these simple steps to withdraw your earnings quickly and securely.
+            </div>
+            
+            <ul class="terms-list">
+                <li><i class="fas fa-check-circle"></i> Minimum withdrawal: <span id="minAmount">৳50</span></li>
+                <li><i class="fas fa-check-circle"></i> Maximum withdrawal: <span id="maxAmount">৳50000</span></li>
+                <li><i class="fas fa-check-circle"></i> Processing time: 24-48 hours</li>
+                <li><i class="fas fa-check-circle"></i> No hidden fees</li>
+            </ul>
+            
+            <button class="btn btn-secondary" id="continueWithdrawBtn">
+                <i class="fas fa-arrow-right"></i> Continue Withdraw
+            </button>
+        </div>
+
+        <!-- Withdraw History - পূর্বের সিস্টেম মতো -->
+        <div class="history-section">
+            <div class="section-title">
+                <i class="fas fa-history"></i> Withdraw History
+            </div>
+            
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchHistory" placeholder="Search by transaction ID...">
+            </div>
+            
+            <div class="history-list" id="historyList">
+                <div class="loading">Loading history...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 2: Amount Input -->
+    <div class="container amount-input-page" id="amountPage">
+        <header>
+            <div class="user-profile">
+                <button class="back-btn" id="backToHome">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="profile-info">
+                    <div class="profile-name">Enter Amount</div>
+                    <div class="profile-details">Withdraw your balance</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="amount-input-container">
+            <div class="amount-label">Withdrawal Amount</div>
+            <input type="number" class="amount-input" id="withdrawAmount" placeholder="৳0.00" inputmode="numeric">
+        </div>
+
+        <div class="balance-info">
+            Available: <span id="availableBalance">৳0.00</span>
+        </div>
+
+        <div class="limit-info">
+            Min: <span id="minLimit">৳50</span> • Max: <span id="maxLimit">৳50000</span>
+        </div>
+
+        <button class="btn" id="continueToPaymentBtn">
+            <i class="fas fa-arrow-right"></i> Continue
+        </button>
+    </div>
+
+    <!-- Page 3: Payment Method - 3 Column Grid -->
+    <div class="container payment-method-page" id="paymentPage">
+        <header>
+            <div class="user-profile">
+                <button class="back-btn" id="backToAmount">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="profile-info">
+                    <div class="profile-name">Payment Method</div>
+                    <div class="profile-details">Select how to receive money</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 3 Column Grid for Payment Methods -->
+        <div class="payment-methods-grid" id="paymentMethodsGrid">
+            <!-- Payment methods will be loaded here -->
+        </div>
+
+        <!-- 2 Column Grid for Input -->
+        <div class="payment-input-section">
+            <div class="payment-input-grid">
+                <input type="text" id="paymentNumberInput" placeholder="Enter payment number">
+                <button class="add-payment-btn" id="addPaymentBtn">
+                    <i class="fas fa-plus"></i> Add
+                </button>
+            </div>
+            
+            <div class="saved-payments" id="savedPayments">
+                <!-- Saved payment methods will appear here -->
+            </div>
+        </div>
+
+        <button class="btn" id="confirmWithdrawBtn" disabled>
+            <i class="fas fa-lock"></i> Confirm Withdrawal
+        </button>
+    </div>
+
+    <!-- Password Setup Modal - No Close Button -->
+    <div class="modal password-modal" id="passwordSetupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Set Security Password</div>
+                <!-- No close button -->
+            </div>
+            <form id="passwordSetupForm">
+                <div class="password-input-group">
+                    <label for="newPassword">Enter 6-digit Password</label>
+                    <input type="password" id="newPassword" maxlength="6" pattern="[0-9]{6}" required placeholder="000000">
+                </div>
+                <div class="password-input-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" maxlength="6" pattern="[0-9]{6}" required placeholder="000000">
+                </div>
+                <button type="submit" class="btn">
+                    <i class="fas fa-save"></i> Save Password
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Password Verify Modal - With Close Button -->
+    <div class="modal" id="passwordVerifyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Security Verification</div>
+                <button class="close-modal" id="closePasswordVerify">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div style="text-align: center; margin-bottom: 20px; color: var(--text-light); font-size: 0.9rem;">
+                <i class="fas fa-shield-alt" style="color: var(--primary); font-size: 2rem; margin-bottom: 10px;"></i>
+                <p>For security purposes, please verify your password to complete the withdrawal.</p>
+            </div>
+            <form id="passwordVerifyForm">
+                <div class="password-input-group">
+                    <label for="verifyPassword">Enter your password</label>
+                    <input type="password" id="verifyPassword" maxlength="6" pattern="[0-9]{6}" required placeholder="000000">
+                </div>
+                <button type="submit" class="btn" id="verifySubmitBtn">
+                    <i class="fas fa-check"></i> Confirm Withdrawal
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="success-modal-content">
+            <div class="success-amount" id="successAmount">৳0.00</div>
+            
+            <div class="success-details">
+                <div class="success-detail-item">
+                    <span class="success-detail-label">Transaction ID</span>
+                    <span class="success-detail-value">
+                        <span id="successTransactionId">N/A</span>
+                        <button class="copy-btn" id="copySuccessId">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </span>
+                </div>
+                <div class="success-detail-item">
+                    <span class="success-detail-label">Date</span>
+                    <span class="success-detail-value" id="successDate">N/A</span>
+                </div>
+                <div class="success-detail-item">
+                    <span class="success-detail-label">Fee</span>
+                    <span class="success-detail-value">৳0.00</span>
+                </div>
+                <div class="success-detail-item">
+                    <span class="success-detail-label">Status</span>
+                    <span class="success-detail-value">Pending</span>
+                </div>
+            </div>
+            
+            <div class="success-buttons">
+                <button class="btn btn-secondary" id="joinGroupBtn">
+                    <i class="fab fa-telegram"></i> Join Group
+                </button>
+                <button class="btn" id="backHomeBtn">
+                    <i class="fas fa-home"></i> Back Home
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insufficient Balance Alert -->
+    <div class="insufficient-balance-alert" id="insufficientBalanceAlert">
+        <div class="alert-content">
+            <div class="alert-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="alert-title">Insufficient Balance</div>
+            <div class="alert-message">
+                You don't have enough balance to withdraw. Please deposit first.
+            </div>
+            <button class="btn btn-accent" id="depositBtn">
+                <i class="fas fa-download"></i> Deposit Now
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVSA8ip1vBTs_HFZGkXAPct0v-gU6CzG0",
+            authDomain: "testingpp-935bc.firebaseapp.com",
+            databaseURL: "https://testingpp-935bc-default-rtdb.firebaseio.com",
+            projectId: "testingpp-935bc",
+            storageBucket: "testingpp-935bc.firebasestorage.app",
+            messagingSenderId: "303082886262",
+            appId: "1:303082886262:web:0be011a2659985c3a1bb57",
+            measurementId: "G-TVG8YCF2N1"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Telegram Bot Configuration
+        const BOT_TOKEN = "7673657711:AAG9aHlpI8_Egvwi0fY9rxA4qyEfqOw16nU";
+        const ADMIN_CHANNEL_ID = "-1002314597186";
+        const BOT_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+
+        // Telegram Web App
+        const tg = window.Telegram.WebApp;
+        let userData = null;
+        let userBalance = 0;
+        let savedPayments = [];
+        let currentWithdrawAmount = 0;
+        let selectedPaymentMethod = null;
+        let paymentSettings = {
+            minWithdraw: 50,
+            maxWithdraw: 50000,
+            withdrawFee: 0
+        };
+        let wrongPasswordAttempts = 0;
+
+        // Payment Methods Configuration with Logos
+        const paymentMethods = {
+            Bkash: { 
+                pattern: "^01[3-9][0-9]{8}$", 
+                placeholder: "01XXXXXXXXX", 
+                label: "Bkash Number",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/BKash_logo.svg/1200px-BKash_logo.svg.png"
+            },
+            Nagad: { 
+                pattern: "^01[3-9][0-9]{8}$", 
+                placeholder: "01XXXXXXXXX", 
+                label: "Nagad Number",
+                logo: "https://www.nagad.com.bd/assets/images/logo/nagad-logo.png"
+            },
+            Rocket: { 
+                pattern: "^01[3-9][0-9]{8}$", 
+                placeholder: "01XXXXXXXXX", 
+                label: "Rocket Number",
+                logo: "https://www.dutchbanglabank.com/images/rocket.png"
+            },
+            Binance: { 
+                pattern: "^\\d{6,11}$", 
+                placeholder: "ID1042457700", 
+                label: "Binance ID",
+                logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png"
+            },
+            Payeer: { 
+                pattern: "^P\\d{7,10}$", 
+                placeholder: "P1127766562", 
+                label: "Payeer ID",
+                logo: "https://payeer.com/design/images/logo.svg"
+            }
+        };
+
+        // Initialize Application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        // Initialize App
+        function initializeApp() {
+            // Set theme from URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const theme = urlParams.get('theme');
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+
+            // Check if user is blocked
+            checkUserBlockStatus();
+
+            // Telegram WebApp Expansion
+            if (tg && tg.expand) {
+                tg.expand();
+            }
+            
+            // Get Telegram User Data
+            let tgUser = null;
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                tgUser = tg.initDataUnsafe.user;
+            }
+            
+            // Fallback for testing
+            if (!tgUser) {
+                tgUser = {
+                    id: "123456789",
+                    username: "test_user",
+                    first_name: "Test",
+                    last_name: "User",
+                    photo_url: "https://via.placeholder.com/150"
+                };
+                showAlert('Demo Mode', 'Running in demo mode without Telegram', 'warning');
+            }
+            
+            userData = {
+                chatId: tgUser.id.toString(),
+                username: tgUser.username || `user_${tgUser.id}`,
+                firstName: tgUser.first_name || '',
+                lastName: tgUser.last_name || '',
+                photoUrl: tgUser.photo_url || ''
+            };
+            
+            updateUserProfile();
+            loadUserData();
+            loadPaymentSettings();
+            loadPaymentMethods();
+            setupEventListeners();
+        }
+
+        // Check User Block Status
+        function checkUserBlockStatus() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const blocked = urlParams.get('blocked');
+            if (blocked === 'true') {
+                showBlockOverlay();
+            }
+        }
+
+        // Show Block Overlay
+        function showBlockOverlay() {
+            document.getElementById('blockOverlay').style.display = 'flex';
+        }
+
+        // Update User Profile with Photo
+        function updateUserProfile() {
+            const fullName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+            document.getElementById('profileName').textContent = fullName || 'User';
+            document.getElementById('userName').textContent = '@' + (userData.username || 'username');
+            document.getElementById('userId').textContent = 'ID: ' + userData.chatId;
+            
+            const profilePic = document.getElementById('profilePic');
+            if (userData.photoUrl) {
+                profilePic.style.backgroundImage = `url(${userData.photoUrl})`;
+                profilePic.textContent = '';
+            } else {
+                const initials = (userData.firstName ? userData.firstName.charAt(0).toUpperCase() : '') + 
+                               (userData.lastName ? userData.lastName.charAt(0).toUpperCase() : '');
+                profilePic.textContent = initials || 'U';
+            }
+        }
+
+        // Load Payment Settings from new collection
+        function loadPaymentSettings() {
+            db.collection('withdrawSettings').doc('limits').get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        paymentSettings.minWithdraw = data.minWithdraw || 50;
+                        paymentSettings.maxWithdraw = data.maxWithdraw || 50000;
+                        paymentSettings.withdrawFee = data.withdrawFee || 0;
+                    }
+                    updateLimitDisplay();
+                })
+                .catch((error) => {
+                    console.error('Error loading payment settings:', error);
+                    updateLimitDisplay();
+                });
+        }
+
+        function updateLimitDisplay() {
+            document.getElementById('minAmount').textContent = `৳${paymentSettings.minWithdraw}`;
+            document.getElementById('maxAmount').textContent = `৳${paymentSettings.maxWithdraw}`;
+            document.getElementById('minLimit').textContent = `৳${paymentSettings.minWithdraw}`;
+            document.getElementById('maxLimit').textContent = `৳${paymentSettings.maxWithdraw}`;
+        }
+
+        // Load Payment Methods in 3 Column Grid
+        function loadPaymentMethods() {
+            const container = document.getElementById('paymentMethodsGrid');
+            container.innerHTML = '';
+            
+            Object.keys(paymentMethods).forEach(method => {
+                const payment = paymentMethods[method];
+                const card = document.createElement('div');
+                card.className = 'payment-method-card';
+                card.innerHTML = `
+                    <div class="payment-logo" style="background-image: url(${payment.logo})"></div>
+                    <div class="payment-method-name">${method}</div>
+                `;
+                
+                card.addEventListener('click', () => selectPaymentMethod(method, card));
+                container.appendChild(card);
+            });
+        }
+
+        // Select Payment Method
+        function selectPaymentMethod(method, card) {
+            // Remove selected class from all
+            document.querySelectorAll('.payment-method-card').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked card
+            card.classList.add('selected');
+            
+            selectedPaymentMethod = method;
+            document.getElementById('paymentNumberInput').placeholder = paymentMethods[method].placeholder;
+            document.getElementById('paymentNumberInput').value = '';
+            
+            validatePaymentForm();
+        }
+
+        // Load User Data
+        function loadUserData() {
+            // Load balance
+            db.collection('userBalance').doc(userData.chatId).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        userBalance = data.mainBalance || data.balance || 0;
+                        document.getElementById('availableBalance').textContent = `৳${userBalance.toFixed(2)}`;
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error loading balance:', error);
+                });
+
+            // Check password
+            db.collection('userPassword').doc(userData.chatId).get()
+                .then((doc) => {
+                    if (!doc.exists) {
+                        setTimeout(() => {
+                            showPasswordSetupModal();
+                        }, 2000);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error checking password:', error);
+                });
+
+            // Load withdraw history
+            loadWithdrawHistory();
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Navigation
+            document.getElementById('continueWithdrawBtn').addEventListener('click', showAmountPage);
+            document.getElementById('backToHome').addEventListener('click', showHomePage);
+            document.getElementById('backToAmount').addEventListener('click', showAmountPage);
+            document.getElementById('continueToPaymentBtn').addEventListener('click', showPaymentPage);
+            document.getElementById('confirmWithdrawBtn').addEventListener('click', verifyPassword);
+            
+            // Payment methods
+            document.getElementById('addPaymentBtn').addEventListener('click', addPaymentMethod);
+            document.getElementById('paymentNumberInput').addEventListener('input', validatePaymentInput);
+            
+            // Password modals
+            document.getElementById('passwordSetupForm').addEventListener('submit', savePassword);
+            document.getElementById('passwordVerifyForm').addEventListener('submit', processWithdrawal);
+            document.getElementById('closePasswordVerify').addEventListener('click', closePasswordVerify);
+            
+            // Success modal
+            document.getElementById('backHomeBtn').addEventListener('click', showHomePage);
+            document.getElementById('joinGroupBtn').addEventListener('click', joinGroup);
+            document.getElementById('copySuccessId').addEventListener('click', copyTransactionId);
+            
+            // Deposit button
+            document.getElementById('depositBtn').addEventListener('click', goToDeposit);
+            
+            // Amount input
+            document.getElementById('withdrawAmount').addEventListener('input', validateAmount);
+            
+            // Search history
+            document.getElementById('searchHistory').addEventListener('input', searchHistory);
+        }
+
+        // Page Navigation
+        function showHomePage() {
+            document.getElementById('homePage').style.display = 'block';
+            document.getElementById('amountPage').style.display = 'none';
+            document.getElementById('paymentPage').style.display = 'none';
+            closeAllModals();
+        }
+
+        function showAmountPage() {
+            document.getElementById('homePage').style.display = 'none';
+            document.getElementById('amountPage').style.display = 'block';
+            document.getElementById('paymentPage').style.display = 'none';
+            
+            // Auto-focus amount input
+            setTimeout(() => {
+                document.getElementById('withdrawAmount').focus();
+            }, 300);
+        }
+
+        function showPaymentPage() {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            
+            if (!amount || amount <= 0) {
+                showAlert('Invalid Amount', 'Please enter a valid amount', 'error');
+                return;
+            }
+            
+            if (amount < paymentSettings.minWithdraw) {
+                showAlert('Minimum Amount', `Minimum withdrawal amount is ৳${paymentSettings.minWithdraw}`, 'error');
+                return;
+            }
+            
+            if (amount > paymentSettings.maxWithdraw) {
+                showAlert('Maximum Amount', `Maximum withdrawal amount is ৳${paymentSettings.maxWithdraw}`, 'error');
+                return;
+            }
+            
+            if (amount > userBalance) {
+                showInsufficientBalanceAlert();
+                return;
+            }
+            
+            currentWithdrawAmount = amount;
+            document.getElementById('homePage').style.display = 'none';
+            document.getElementById('amountPage').style.display = 'none';
+            document.getElementById('paymentPage').style.display = 'block';
+        }
+
+        // Payment Methods
+        function addPaymentMethod() {
+            const number = document.getElementById('paymentNumberInput').value.trim();
+
+            // Validation
+            if (!selectedPaymentMethod) {
+                showAlert('Required', 'Please select payment method first', 'error');
+                return;
+            }
+
+            if (!number) {
+                showAlert('Required', 'Please enter payment number', 'error');
+                return;
+            }
+
+            const regex = new RegExp(paymentMethods[selectedPaymentMethod].pattern);
+            if (!regex.test(number)) {
+                showAlert('Invalid', `Please enter valid ${paymentMethods[selectedPaymentMethod].label}`, 'warning');
+                return;
+            }
+
+            // Check for duplicate
+            if (savedPayments.some(p => p.method === selectedPaymentMethod && p.number === number)) {
+                showAlert('Duplicate', 'This payment method is already added', 'warning');
+                return;
+            }
+
+            // Add to saved payments
+            savedPayments.push({ 
+                method: selectedPaymentMethod, 
+                number: number,
+                logo: paymentMethods[selectedPaymentMethod].logo
+            });
+            renderSavedPayments();
+            
+            // Reset inputs
+            document.getElementById('paymentNumberInput').value = '';
+            
+            // Enable confirm button if we have at least one payment method
+            document.getElementById('confirmWithdrawBtn').disabled = savedPayments.length === 0;
+            
+            showAlert('Success', 'Payment method added successfully', 'success');
+        }
+
+        function renderSavedPayments() {
+            const container = document.getElementById('savedPayments');
+            container.innerHTML = '';
+            
+            if (savedPayments.length === 0) {
+                container.innerHTML = '<div style="color: #666; font-style: italic; padding: 10px; text-align: center;">No payment methods added yet</div>';
+                return;
+            }
+
+            savedPayments.forEach((payment, index) => {
+                const paymentEl = document.createElement('div');
+                paymentEl.className = 'saved-payment-item';
+                paymentEl.innerHTML = `
+                    <div class="saved-payment-info">
+                        <div class="saved-payment-logo" style="background-image: url(${payment.logo})"></div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${payment.method}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-light);">${payment.number}</div>
+                        </div>
+                    </div>
+                    <button class="delete-payment-btn" data-index="${index}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                container.appendChild(paymentEl);
+            });
+
+            // Add delete event listeners
+            document.querySelectorAll('.delete-payment-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    savedPayments.splice(index, 1);
+                    renderSavedPayments();
+                    document.getElementById('confirmWithdrawBtn').disabled = savedPayments.length === 0;
+                    showAlert('Removed', 'Payment method deleted', 'success');
+                });
+            });
+        }
+
+        function validatePaymentInput() {
+            // Real-time validation can be added here
+        }
+
+        function validatePaymentForm() {
+            const number = document.getElementById('paymentNumberInput').value.trim();
+            const method = selectedPaymentMethod;
+            
+            if (method && number) {
+                const regex = new RegExp(paymentMethods[method].pattern);
+                if (regex.test(number)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Validate Amount
+        function validateAmount() {
+            const amountInput = document.getElementById('withdrawAmount');
+            const continueBtn = document.getElementById('continueToPaymentBtn');
+            const amount = parseFloat(amountInput.value);
+            
+            if (amount && amount > 0 && amount >= paymentSettings.minWithdraw && amount <= paymentSettings.maxWithdraw) {
+                continueBtn.disabled = false;
+            } else {
+                continueBtn.disabled = true;
+            }
+        }
+
+        // Password Modals
+        function showPasswordSetupModal() {
+            document.getElementById('passwordSetupModal').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('passwordSetupModal').classList.add('show');
+            }, 10);
+        }
+
+        function verifyPassword() {
+            if (savedPayments.length === 0) {
+                showAlert('Required', 'Please add at least one payment method', 'error');
+                return;
+            }
+            
+            document.getElementById('passwordVerifyModal').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('passwordVerifyModal').classList.add('show');
+            }, 10);
+        }
+
+        function closePasswordVerify() {
+            document.getElementById('passwordVerifyModal').classList.remove('show');
+            setTimeout(() => {
+                document.getElementById('passwordVerifyModal').style.display = 'none';
+            }, 300);
+        }
+
+        // Save Password
+        function savePassword(e) {
+            e.preventDefault();
+            
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (newPassword.length !== 6 || !/^\d+$/.test(newPassword)) {
+                showAlert('Invalid Password', 'Password must be exactly 6 digits', 'error');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showAlert('Password Mismatch', 'Passwords do not match', 'error');
+                return;
+            }
+            
+            db.collection('userPassword').doc(userData.chatId).set({
+                password: newPassword,
+                createdAt: new Date()
+            })
+            .then(() => {
+                document.getElementById('passwordSetupModal').classList.remove('show');
+                setTimeout(() => {
+                    document.getElementById('passwordSetupModal').style.display = 'none';
+                }, 300);
+                showAlert('Success', 'Password set successfully', 'success');
+            })
+            .catch((error) => {
+                console.error('Error saving password:', error);
+                showAlert('Error', 'Failed to save password', 'error');
+            });
+        }
+
+        // Process Withdrawal with Block System
+        function processWithdrawal(e) {
+            e.preventDefault();
+            
+            const enteredPassword = document.getElementById('verifyPassword').value;
+            
+            // Verify password
+            db.collection('userPassword').doc(userData.chatId).get()
+                .then((doc) => {
+                    if (!doc.exists || doc.data().password !== enteredPassword) {
+                        wrongPasswordAttempts++;
+                        
+                        if (wrongPasswordAttempts >= 3) {
+                            // Block user after 3 wrong attempts
+                            blockUser();
+                            closePasswordVerify();
+                            return;
+                        }
+                        
+                        const attemptsLeft = 3 - wrongPasswordAttempts;
+                        showAlert('Wrong Password', `Incorrect password. ${attemptsLeft} attempts remaining`, 'error');
+                        return;
+                    }
+                    
+                    // Password correct, reset attempts and process withdrawal
+                    wrongPasswordAttempts = 0;
+                    closePasswordVerify();
+                    submitWithdrawRequest();
+                })
+                .catch((error) => {
+                    console.error('Error verifying password:', error);
+                    showAlert('Error', 'Failed to verify password', 'error');
+                });
+        }
+
+        // Block User
+        function blockUser() {
+            db.collection('users').doc(userData.chatId).update({
+                isBlocked: true,
+                blockedAt: new Date(),
+                blockReason: 'Multiple wrong password attempts'
+            })
+            .then(() => {
+                showBlockOverlay();
+                showAlert('Account Blocked', 'Your account has been temporarily blocked due to multiple incorrect password attempts', 'error');
+            })
+            .catch((error) => {
+                console.error('Error blocking user:', error);
+            });
+        }
+
+        // Submit Withdraw Request
+        function submitWithdrawRequest() {
+            const requestData = {
+                userId: userData.chatId,
+                username: userData.username,
+                fullName: `${userData.firstName} ${userData.lastName}`.trim(),
+                amount: currentWithdrawAmount,
+                paymentMethods: savedPayments,
+                status: 'pending',
+                fee: paymentSettings.withdrawFee,
+                createdAt: new Date()
+            };
+            
+            // Save to userWithdraw collection
+            db.collection('userWithdraw').add(requestData)
+                .then((docRef) => {
+                    const transactionId = docRef.id;
+                    
+                    // Update user balance
+                    const newBalance = userBalance - currentWithdrawAmount;
+                    db.collection('userBalance').doc(userData.chatId).update({
+                        mainBalance: newBalance
+                    });
+                    
+                    // Send Telegram notifications
+                    sendTelegramNotifications(transactionId);
+                    
+                    // Show success modal
+                    showSuccessModal(transactionId);
+                })
+                .catch((error) => {
+                    console.error('Error submitting withdrawal:', error);
+                    showAlert('Error', 'Failed to submit withdrawal request', 'error');
+                });
+        }
+
+        // Send Telegram Notifications
+        async function sendTelegramNotifications(transactionId) {
+            // User confirmation
+            const userMessage = `✅ <b>Withdrawal Request Submitted</b>\n\n` +
+                               `Your withdrawal request of <b>${currentWithdrawAmount}৳</b> has been successfully submitted.\n\n` +
+                               `<b>Transaction ID:</b> <code>${transactionId}</code>\n` +
+                               `<b>Status:</b> Pending Review\n\n` +
+                               `We will process your request shortly.`;
+            
+            await sendTelegramMessage(userData.chatId, userMessage);
+            
+            // Admin notification
+            const paymentMethodsText = savedPayments.map(p => 
+                `• ${p.method}: <code>${p.number}</code>`
+            ).join('\n');
+            
+            const adminMessage = `🚨 <b>New Withdrawal Request</b>\n\n` +
+                                `<b>User:</b> ${userData.firstName} ${userData.lastName} (@${userData.username})\n` +
+                                `<b>User ID:</b> <code>${userData.chatId}</code>\n` +
+                                `<b>Amount:</b> ${currentWithdrawAmount}৳\n\n` +
+                                `<b>Payment Methods:</b>\n${paymentMethodsText}\n\n` +
+                                `<b>Transaction ID:</b> <code>${transactionId}</code>`;
+            
+            await sendTelegramMessage(ADMIN_CHANNEL_ID, adminMessage);
+        }
+
+        async function sendTelegramMessage(chatId, message) {
+            try {
+                const response = await fetch(BOT_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Error sending Telegram message:', error);
+            }
+        }
+
+        // Show Success Modal
+        function showSuccessModal(transactionId) {
+            document.getElementById('successAmount').textContent = `৳${currentWithdrawAmount.toFixed(2)}`;
+            document.getElementById('successTransactionId').textContent = transactionId;
+            document.getElementById('successDate').textContent = new Date().toLocaleString();
+            
+            document.getElementById('successModal').style.display = 'block';
+            
+            // Reset form
+            savedPayments = [];
+            renderSavedPayments();
+            document.getElementById('withdrawAmount').value = '';
+            document.getElementById('confirmWithdrawBtn').disabled = true;
+        }
+
+        // Close All Modals
+        function closeAllModals() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                if (!modal.classList.contains('password-modal')) {
+                    modal.style.display = 'none';
+                    modal.classList.remove('show');
+                }
+            });
+        }
+
+        // Copy Transaction ID
+        function copyTransactionId() {
+            const transactionId = document.getElementById('successTransactionId').textContent;
+            navigator.clipboard.writeText(transactionId).then(() => {
+                showAlert('Copied!', 'Transaction ID copied to clipboard', 'success');
+            });
+        }
+
+        // Join Group
+        function joinGroup() {
+            window.open('https://t.me/your_group_link', '_blank');
+        }
+
+        // Go to Deposit
+        function goToDeposit() {
+            const baseUrl = 'https://ocearn.github.io/FbmWallet';
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const params = new URLSearchParams({
+                userId: userData.chatId,
+                userName: userData.username,
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                action: 'deposit',
+                theme: isDarkMode ? 'dark' : 'light'
+            });
+            
+            window.location.href = `${baseUrl}/deposit/index.html?${params.toString()}`;
+        }
+
+        // Show Insufficient Balance Alert
+        function showInsufficientBalanceAlert() {
+            document.getElementById('insufficientBalanceAlert').classList.add('show');
+        }
+
+        // Load Withdraw History - পূর্বের সিস্টেম মতো
+        function loadWithdrawHistory() {
+            db.collection('userWithdraw')
+                .where('userId', '==', userData.chatId)
+                .orderBy('createdAt', 'desc')
+                .get()
+                .then((querySnapshot) => {
+                    const historyList = document.getElementById('historyList');
+                    historyList.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        historyList.innerHTML = `
+                            <div class="no-history">
+                                <i class="fas fa-receipt"></i>
+                                <div>No withdrawal history found</div>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    querySnapshot.forEach((doc) => {
+                        const request = doc.data();
+                        const historyItem = createHistoryItem(request, doc.id);
+                        historyList.appendChild(historyItem);
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error loading history:', error);
+                });
+        }
+
+        // Create History Item - পূর্বের সিস্টেম মতো
+        function createHistoryItem(request, docId) {
+            const date = new Date(request.createdAt.seconds * 1000);
+            const formattedDate = date.toLocaleDateString();
+            const formattedTime = date.toLocaleTimeString();
+            
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            historyItem.innerHTML = `
+                <div class="history-header">
+                    <span class="history-timestamp" title="${docId}"><i class="fas fa-hashtag"></i> ${docId.substring(0, 8)}...</span>
+                    <span class="history-amount"><i class="fas fa-money-bill-wave"></i> ${request.amount} ৳</span>
+                </div>
+                <div class="history-details">
+                    <span class="history-date"><i class="fas fa-calendar"></i> ${formattedDate} ${formattedTime}</span>
+                    <span class="history-status status-${request.status}">${request.status}</span>
+                </div>
+                <div class="history-actions">
+                    <button class="details-btn" data-id="${docId}">
+                        <i class="fas fa-eye"></i> Details
+                    </button>
+                </div>
+            `;
+            
+            // Add event listener for details button
+            const detailsBtn = historyItem.querySelector('.details-btn');
+            detailsBtn.addEventListener('click', function() {
+                showWithdrawDetails(request, docId);
+            });
+            
+            return historyItem;
+        }
+
+        // Show Withdraw Details
+        function showWithdrawDetails(request, docId) {
+            const date = new Date(request.createdAt.seconds * 1000);
+            const formattedDate = date.toLocaleDateString();
+            const formattedTime = date.toLocaleTimeString();
+            
+            let paymentMethodsText = '';
+            if (request.paymentMethods && request.paymentMethods.length > 0) {
+                paymentMethodsText = request.paymentMethods.map(p => 
+                    `${p.method}: ${p.number}`
+                ).join(', ');
+            }
+            
+            const detailMessage = `
+                <div style="text-align: left;">
+                    <p><strong>Amount:</strong> ${request.amount}৳</p>
+                    <p><strong>Status:</strong> ${request.status}</p>
+                    <p><strong>Date:</strong> ${formattedDate}</p>
+                    <p><strong>Time:</strong> ${formattedTime}</p>
+                    <p><strong>Transaction ID:</strong> ${docId}</p>
+                    ${paymentMethodsText ? `<p><strong>Payment Methods:</strong> ${paymentMethodsText}</p>` : ''}
+                </div>
+            `;
+            
+            showAlert('Withdrawal Details', detailMessage, 'info');
+        }
+
+        // Search History
+        function searchHistory() {
+            const searchTerm = document.getElementById('searchHistory').value.toLowerCase();
+            // Implementation for real-time search
+        }
+
+        // Show Alert
+        function showAlert(title, text, icon) {
+            Swal.fire({
+                title: title,
+                html: text,
+                icon: icon,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000
+            });
+        }
+    </script>
+</body>
+</html>
