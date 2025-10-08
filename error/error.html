@@ -1,143 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
 
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Web Design Mastery | 404 Not Found Page</title>
-  </head>
-  
-  <style>
-    @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap");
+    <title>NexaWallet - Page Not Found</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap");
 
-:root {
-  --primary-color: #f9b23c;
-  --primary-color-dark: #f49a20;
-  --text-dark: #333333;
-  --text-light: #767268;
-  --extra-light: #ffffff;
-}
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #8b5cf6;
+            --accent: #06d6a0;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius: 16px;
+        }
 
-* {
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-}
+        .dark-mode {
+            --text: #f1f5f9;
+            --text-light: #94a3b8;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
 
-body {
-  height: 100vh;
-  padding-top: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--extra-light);
-  font-family: "Roboto", sans-serif;
-}
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
 
-.container {
-  max-width: 400px;
-  padding: 2rem;
-  margin: auto;
-  display: grid;
-  color: var(--text-dark);
-}
+        body {
+            height: 100vh;
+            padding-top: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg);
+            font-family: "Roboto", sans-serif;
+            color: var(--text);
+            transition: all 0.3s ease;
+        }
 
-.header {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-.header h1 {
-  font-size: 4rem;
-  font-weight: 900;
-}
-.container h3 {
-  font-size: 2rem;
-  font-weight: 900;
-}
-.container img {
-  width: 100%;
-  max-width: 300px;
-  margin: auto;
-}
+        .container {
+            max-width: 400px;
+            padding: 2rem;
+            margin: auto;
+            display: grid;
+            color: var(--text-dark);
+        }
 
-.footer {
-  display: grid;
-  gap: 2rem;
-  place-content: baseline;
-}
-.footer p {
-  font-variation-settings: 1rem;
-}
+        .header {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
 
-.footer button {
-  padding: 1rem;
-  outline: none;
-  border: none;
-  border-radius: 5px;
-  color: var(--extra-light);
-  font-size: 1rem;
-  font-weight: 600;
-  background-color: var(--primary-color);
-  cursor: pointer;
-  transition: 0.3s;
-}
+        .header h1 {
+            font-size: 6rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
 
-.footer button:hover {
-  background-color: var(--primary-color-dark);
-}
+        .container h3 {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
 
-@media (min-width: 640px) {
-  nav {
-    max-width: 1000px;
-  }
-  .container {
-    max-width: 1200px;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-  }
-  .container img {
-    max-width: 550px;
-    grid-area: 1/1/3/2;
-  }
-  .footer {
-    max-width: 300px;
-  }
-}
+        .container img {
+            width: 100%;
+            max-width: 300px;
+            margin: auto;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
 
-@media (min-width: 1024px) {
-  .container {
-    column-gap: 5rem;
-  }
-  .header h1 {
-    font-size: 6rem;
-  }
-  .header h3 {
-    font-size: 2.5rem;
-  }
-}
-    
-    
-  </style>
-  
-  <body>
-  
+        .footer {
+            display: grid;
+            gap: 2rem;
+            place-content: baseline;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .footer p {
+            font-size: 1rem;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .footer button {
+            padding: 1rem 2rem;
+            outline: none;
+            border: none;
+            border-radius: var(--radius);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .footer button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--card);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--primary);
+            box-shadow: var(--shadow);
+            border: none;
+        }
+
+        @media (min-width: 640px) {
+            .container {
+                max-width: 1200px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 3rem;
+                align-items: center;
+            }
+            .container img {
+                max-width: 400px;
+                grid-area: 1/1/3/2;
+            }
+            .footer {
+                max-width: 400px;
+                text-align: left;
+            }
+            .header {
+                text-align: left;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                column-gap: 5rem;
+            }
+            .header h1 {
+                font-size: 8rem;
+            }
+            .header h3 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<!--    <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon"></i>
+    </button> -->
+
     <div class="container">
-      <div class="header">
-        <h1>404</h1>
-        <h3>Page Not Found!</h3>
-      </div>
-      <img src="https://i.ibb.co.com/JwbH0zfx/bg.jpg" alt="not found" />
-      <div class="footer">
-        <p>
-          We're sorry, the page you requested could not be found. Please go back
-          to the homepage!
-        </p>
-
-<button onclick="window.location.href='https://ocearn.github.io/FbmWallet/index.html'">GO HOME</button>
-        
-      </div>
+        <div class="header">
+            <h1>404</h1>
+            <h3>Page Not Found!</h3>
+        </div>
+        <img src="https://i.ibb.co/JwbH0zfx/bg.jpg" alt="not found" />
+        <div class="footer">
+            <p>
+                We're sorry, the page you requested could not be found. Please go back
+                to the homepage!
+            </p>
+            <button onclick="window.location.href='https://ocearn.github.io/FbmWallet/index.html'">
+                <i class="fas fa-home"></i> GO HOME
+            </button>
+        </div>
     </div>
-  </body>
+
+    <script>
+        // Theme Toggle Functionality
+        const themeToggle = document.getElementById('themeToggle');
+        
+        // Check for saved theme preference
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (savedDarkMode) {
+                document.body.classList.add('dark-mode');
+                const themeIcon = themeToggle.querySelector('i');
+                themeIcon.className = 'fas fa-sun';
+            }
+        });
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDarkMode);
+            
+            // Update theme icon
+            const themeIcon = themeToggle.querySelector('i');
+            themeIcon.className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+        });
+
+        // Get theme from URL parameters if available
+        const urlParams = new URLSearchParams(window.location.search);
+        const theme = urlParams.get('theme');
+        if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
+            const themeIcon = themeToggle.querySelector('i');
+            themeIcon.className = 'fas fa-sun';
+            localStorage.setItem('darkMode', 'true');
+        }
+    </script>
+</body>
+
 </html>
