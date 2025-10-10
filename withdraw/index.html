@@ -1144,12 +1144,15 @@
                 Follow these simple steps to withdraw your earnings quickly and securely.
             </div>
             
-            <ul class="terms-list">
-                <li><i class="fas fa-check-circle"></i> Minimum withdrawal: <span id="minAmount">৳50</span></li>
-                <li><i class="fas fa-check-circle"></i> Maximum withdrawal: <span id="maxAmount">৳50000</span></li>
-                <li><i class="fas fa-check-circle"></i> Processing time: 24-48 hours</li>
-                <li><i class="fas fa-check-circle"></i> No hidden fees</li>
-            </ul>
+           <ul class="terms-list">
+    <li><i class="fas fa-check-circle"></i> Minimum withdrawal: <span id="minAmount">৳50</span></li>
+    <li><i class="fas fa-check-circle"></i> Maximum withdrawal: <span id="maxAmount">৳50000</span></li>
+    <li><i class="fas fa-check-circle"></i> Processing time: 24-48 hours</li>
+    <li id="feeListItem">
+        <i class="fas fa-check-circle"></i> 
+        <span id="feeText">No hidden fees</span>
+    </li>
+</ul>
             
             <button class="btn btn-secondary" id="continueWithdrawBtn">
                 <i class="fas fa-arrow-right"></i> Continue Withdraw
@@ -1317,14 +1320,14 @@
             
             <div class="success-details">
                 <div class="success-detail-item">
-                    <span class="success-detail-label">Transaction ID</span>
-                    <span class="success-detail-value">
-                        <span id="successTransactionId">N/A</span>
-                        <button class="copy-btn" id="copySuccessId">
-                            <i class="far fa-copy"></i>
-                        </button>
-                    </span>
-                </div>
+    <span class="success-detail-label">Transaction ID</span>
+    <span class="success-detail-value">
+        <span id="successTransactionId">N/A</span>
+        <button class="copy-btn" id="copySuccessId">
+            <i class="far fa-copy"></i> Copy
+        </button>
+    </span>
+</div>
                 <div class="success-detail-item">
                     <span class="success-detail-label">Date & Time</span>
                     <span class="success-detail-value" id="successDate">N/A</span>
@@ -1372,1092 +1375,1102 @@
     </div>
 
     <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDVSA8ip1vBTs_HFZGkXAPct0v-gU6CzG0",
-            authDomain: "testingpp-935bc.firebaseapp.com",
-            databaseURL: "https://testingpp-935bc-default-rtdb.firebaseio.com",
-            projectId: "testingpp-935bc",
-            storageBucket: "testingpp-935bc.firebasestorage.app",
-            messagingSenderId: "303082886262",
-            appId: "1:303082886262:web:0be011a2659985c3a1bb57",
-            measurementId: "G-TVG8YCF2N1"
-        };
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDVSA8ip1vBTs_HFZGkXAPct0v-gU6CzG0",
+        authDomain: "testingpp-935bc.firebaseapp.com",
+        databaseURL: "https://testingpp-935bc-default-rtdb.firebaseio.com",
+        projectId: "testingpp-935bc",
+        storageBucket: "testingpp-935bc.firebasestorage.app",
+        messagingSenderId: "303082886262",
+        appId: "1:303082886262:web:0be011a2659985c3a1bb57",
+        measurementId: "G-TVG8YCF2N1"
+    };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-        // Telegram Bot Configuration
-        const BOT_TOKEN = "7673657711:AAG9aHlpI8_Egvwi0fY9rxA4qyEfqOw16nU";
-        const ADMIN_CHANNEL_ID = "-10023145971866";
-        const BOT_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+    // Telegram Bot Configuration
+    const BOT_TOKEN = "7673657711:AAG9aHlpI8_Egvwi0fY9rxA4qyEfqOw16nU";
+    const ADMIN_CHANNEL_ID = "-10023145971866";
+    const BOT_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
 
-        // Telegram Web App
-        const tg = window.Telegram.WebApp;
-        let userData = null;
-        let userBalance = 0;
-        let savedPayments = [];
-        let currentWithdrawAmount = 0;
-        let selectedPaymentMethod = null;
-        let paymentSettings = {
-            minWithdraw: 50,
-            maxWithdraw: 50000,
-            withdrawFee: 0
-        };
-        let wrongPasswordAttempts = 0;
-        let isUserBlocked = false;
+    // Telegram Web App
+    const tg = window.Telegram.WebApp;
+    let userData = null;
+    let userBalance = 0;
+    let savedPayments = [];
+    let currentWithdrawAmount = 0;
+    let selectedPaymentMethod = null;
+    let paymentSettings = {
+        minWithdraw: 50,
+        maxWithdraw: 50000,
+        withdrawFee: 0
+    };
+    let wrongPasswordAttempts = 0;
+    let isUserBlocked = false;
 
-        // Payment Methods Configuration with Logos
-        const paymentMethods = {
-            Bkash: { 
-                pattern: "^01[3-9][0-9]{8}$", 
-                placeholder: "01XXXXXXXXX", 
-                label: "Bkash Number",
-                logo: "https://i.ibb.co/jPr3zzT5/bKash.png"
-            },
-            Nagad: { 
-                pattern: "^01[3-9][0-9]{8}$", 
-                placeholder: "01XXXXXXXXX", 
-                label: "Nagad Number",
-                logo: "https://i.ibb.co/ZzfbKbrz/nagad.png"
-            },
-            Rocket: { 
-                pattern: "^01[3-9][0-9]{8}$", 
-                placeholder: "01XXXXXXXXX", 
-                label: "Rocket Number",
-                logo: "https://i.ibb.co/0pGsRX5m/rocket.png"
-            },
-            Binance: { 
-                pattern: "^\\d{6,11}$", 
-                placeholder: "ID1042457700", 
-                label: "Binance ID",
-                logo: "https://i.ibb.co/FbzYZPst/binance.png"
-            },
-            Payeer: { 
-                pattern: "^P\\d{7,10}$", 
-                placeholder: "P1127766562", 
-                label: "Payeer ID",
-                logo: "https://i.ibb.co/38hcZcS/payeer.png"
-            }
-        };
+    // Payment Methods Configuration with Logos
+    const paymentMethods = {
+        Bkash: { 
+            pattern: "^01[3-9][0-9]{8}$", 
+            placeholder: "01XXXXXXXXX", 
+            label: "Bkash Number",
+            logo: "https://i.ibb.co/jPr3zzT5/bKash.png"
+        },
+        Nagad: { 
+            pattern: "^01[3-9][0-9]{8}$", 
+            placeholder: "01XXXXXXXXX", 
+            label: "Nagad Number",
+            logo: "https://i.ibb.co/ZzfbKbrz/nagad.png"
+        },
+        Rocket: { 
+            pattern: "^01[3-9][0-9]{8}$", 
+            placeholder: "01XXXXXXXXX", 
+            label: "Rocket Number",
+            logo: "https://i.ibb.co/0pGsRX5m/rocket.png"
+        },
+        Binance: { 
+            pattern: "^\\d{6,11}$", 
+            placeholder: "ID1042457700", 
+            label: "Binance ID",
+            logo: "https://i.ibb.co/FbzYZPst/binance.pngg"
+        },
+        Payeer: { 
+            pattern: "^P\\d{7,10}$", 
+            placeholder: "P1127766562", 
+            label: "Payeer ID",
+            logo: "https://i.ibb.co/38hcZcS/payeer.png"
+        }
+    };
 
-        // Initialize Application
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
-        });
+    // Initialize Application
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeApp();
+    });
 
-        // Go Back Function
-        function goBack() {
-            window.history.back();
+    // Go Back Function
+    function goBack() {
+        window.history.back();
+    }
+
+    // Initialize App
+    async function initializeApp() {
+        // Set theme from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const theme = urlParams.get('theme');
+        if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
         }
 
-        // Initialize App
-        async function initializeApp() {
-            // Set theme from URL parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            const theme = urlParams.get('theme');
-            if (theme === 'dark') {
-                document.body.classList.add('dark-mode');
-            }
+        // Telegram WebApp Expansion
+        if (tg && tg.expand) {
+            tg.expand();
+        }
+        
+        // Get Telegram User Data
+        let tgUser = null;
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            tgUser = tg.initDataUnsafe.user;
+        }
+        
+        // Fallback for testing
+        if (!tgUser) {
+            tgUser = {
+                id: "123456789",
+                username: "test_user",
+                first_name: "Test",
+                last_name: "User",
+                photo_url: "https://via.placeholder.com/150"
+            };
+            showAlert('Demo Mode', 'Running in demo mode without Telegram', 'warning');
+        }
+        
+        userData = {
+            chatId: tgUser.id.toString(),
+            username: tgUser.username || `user_${tgUser.id}`,
+            firstName: tgUser.first_name || '',
+            lastName: tgUser.last_name || '',
+            photoUrl: tgUser.photo_url || ''
+        };
+        
+        updateUserProfile();
+        loadUserData();
+        loadPaymentSettings();
+        loadPaymentMethods();
+        setupEventListeners();
+        
+        // Check if user is blocked - show popup alert if blocked
+        const isBlocked = await checkUserBlockStatus();
+        if (isBlocked) {
+            showBlockAlertPopup();
+        }
+    }
 
-            // Telegram WebApp Expansion
-            if (tg && tg.expand) {
-                tg.expand();
-            }
-            
-            // Get Telegram User Data
+    // Check User Block Status from userBlockList collection
+    async function checkUserBlockStatus() {
+        try {
             let tgUser = null;
             if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 tgUser = tg.initDataUnsafe.user;
             }
             
-            // Fallback for testing
             if (!tgUser) {
-                tgUser = {
-                    id: "123456789",
-                    username: "test_user",
-                    first_name: "Test",
-                    last_name: "User",
-                    photo_url: "https://via.placeholder.com/150"
-                };
-                showAlert('Demo Mode', 'Running in demo mode without Telegram', 'warning');
+                tgUser = { id: "123456789" };
             }
             
-            userData = {
-                chatId: tgUser.id.toString(),
-                username: tgUser.username || `user_${tgUser.id}`,
-                firstName: tgUser.first_name || '',
-                lastName: tgUser.last_name || '',
-                photoUrl: tgUser.photo_url || ''
-            };
+            const userId = tgUser.id.toString();
+            const blockDoc = await db.collection('userBlockList').doc(userId).get();
             
-            updateUserProfile();
-            loadUserData();
-            loadPaymentSettings();
-            loadPaymentMethods();
-            setupEventListeners();
-            
-            // Check if user is blocked - show popup alert if blocked
-            const isBlocked = await checkUserBlockStatus();
-            if (isBlocked) {
-                showBlockAlertPopup();
-            }
-        }
-
-        // Check User Block Status from userBlockList collection
-        async function checkUserBlockStatus() {
-            try {
-                let tgUser = null;
-                if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                    tgUser = tg.initDataUnsafe.user;
-                }
-                
-                if (!tgUser) {
-                    tgUser = { id: "123456789" };
-                }
-                
-                const userId = tgUser.id.toString();
-                const blockDoc = await db.collection('userBlockList').doc(userId).get();
-                
-                if (blockDoc.exists) {
-                    const blockData = blockDoc.data();
-                    if (blockData.userBlock === true) {
-                        isUserBlocked = true;
-                        return true;
-                    }
-                }
-                isUserBlocked = false;
-                return false;
-            } catch (error) {
-                console.error('Error checking block status:', error);
-                isUserBlocked = false;
-                return false;
-            }
-        }
-
-        // Show Block Alert Popup (5 seconds auto close)
-        function showBlockAlertPopup() {
-            const blockAlert = document.getElementById('blockAlertPopup');
-            blockAlert.classList.add('show');
-            
-            // Auto close after 5 seconds
-            setTimeout(() => {
-                closeBlockAlert();
-            }, 10000);
-        }
-
-        // Close Block Alert
-        function closeBlockAlert() {
-            document.getElementById('blockAlertPopup').classList.remove('show');
-        }
-
-        // Show Block Overlay - PERMANENT BLOCK (No Close Button, Only Back Button)
-        function showBlockOverlay() {
-            document.getElementById('blockOverlay').style.display = 'flex';
-            // Hide all other content
-            document.getElementById('homePage').style.display = 'none';
-            document.getElementById('amountPage').style.display = 'none';
-            document.getElementById('paymentPage').style.display = 'none';
-        }
-
-        // Update User Profile with Photo
-        function updateUserProfile() {
-            const fullName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
-            document.getElementById('profileName').textContent = fullName || 'User';
-            document.getElementById('userName').textContent = '@' + (userData.username || 'username');
-            document.getElementById('userId').textContent = 'ID: ' + userData.chatId;
-            
-            const profilePic = document.getElementById('profilePic');
-            if (userData.photoUrl) {
-                profilePic.style.backgroundImage = `url(${userData.photoUrl})`;
-                profilePic.textContent = '';
-            } else {
-                const initials = (userData.firstName ? userData.firstName.charAt(0).toUpperCase() : '') + 
-                               (userData.lastName ? userData.lastName.charAt(0).toUpperCase() : '');
-                profilePic.textContent = initials || 'U';
-            }
-        }
-
-        // Load Payment Settings from new collection
-        function loadPaymentSettings() {
-            db.collection('withdrawSettings').doc('limits').get()
-                .then((doc) => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        paymentSettings.minWithdraw = data.minWithdraw || 50;
-                        paymentSettings.maxWithdraw = data.maxWithdraw || 50000;
-                        paymentSettings.withdrawFee = data.withdrawFee || 0;
-                    }
-                    updateLimitDisplay();
-                })
-                .catch((error) => {
-                    console.error('Error loading payment settings:', error);
-                    updateLimitDisplay();
-                });
-        }
-
-        function updateLimitDisplay() {
-            document.getElementById('minAmount').textContent = `৳${paymentSettings.minWithdraw}`;
-            document.getElementById('maxAmount').textContent = `৳${paymentSettings.maxWithdraw}`;
-            document.getElementById('minLimit').textContent = `৳${paymentSettings.minWithdraw}`;
-            document.getElementById('maxLimit').textContent = `৳${paymentSettings.maxWithdraw}`;
-        }
-
-        // Load Payment Methods in 3 Column Grid
-        function loadPaymentMethods() {
-            const container = document.getElementById('paymentMethodsGrid');
-            container.innerHTML = '';
-            
-            Object.keys(paymentMethods).forEach(method => {
-                const payment = paymentMethods[method];
-                const card = document.createElement('div');
-                card.className = 'payment-method-card';
-                card.innerHTML = `
-                    <div class="payment-logo" style="background-image: url(${payment.logo})"></div>
-                    <div class="payment-method-name">${method}</div>
-                `;
-                
-                card.addEventListener('click', () => selectPaymentMethod(method, card));
-                container.appendChild(card);
-            });
-        }
-
-        // Select Payment Method
-        function selectPaymentMethod(method, card) {
-            // Remove selected class from all
-            document.querySelectorAll('.payment-method-card').forEach(el => {
-                el.classList.remove('selected');
-            });
-            
-            // Add selected class to clicked card
-            card.classList.add('selected');
-            
-            selectedPaymentMethod = method;
-            document.getElementById('paymentNumberInput').placeholder = paymentMethods[method].placeholder;
-            document.getElementById('paymentNumberInput').value = '';
-            
-            validatePaymentForm();
-        }
-
-        // Load User Data
-        function loadUserData() {
-            // Load balance
-            db.collection('userBalance').doc(userData.chatId).get()
-                .then((doc) => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        userBalance = data.mainBalance || data.balance || 0;
-                        document.getElementById('availableBalance').textContent = `৳${userBalance.toFixed(2)}`;
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error loading balance:', error);
-                });
-
-            // Check password
-            db.collection('userPassword').doc(userData.chatId).get()
-                .then((doc) => {
-                    if (!doc.exists) {
-                        setTimeout(() => {
-                            showPasswordSetupModal();
-                        }, 2000);
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error checking password:', error);
-                });
-
-            // Load withdraw history from userWithdraw collection
-            loadWithdrawHistory();
-        }
-
-        // Setup Event Listeners
-        function setupEventListeners() {
-            // Navigation
-            document.getElementById('continueWithdrawBtn').addEventListener('click', showAmountPage);
-            document.getElementById('backToHome').addEventListener('click', showHomePage);
-            document.getElementById('backToAmount').addEventListener('click', showAmountPage);
-            document.getElementById('continueToPaymentBtn').addEventListener('click', showPaymentPage);
-            document.getElementById('confirmWithdrawBtn').addEventListener('click', verifyPassword);
-            
-            // Payment methods
-            document.getElementById('addPaymentBtn').addEventListener('click', addPaymentMethod);
-            document.getElementById('paymentNumberInput').addEventListener('input', validatePaymentInput);
-            
-            // Password modals
-            document.getElementById('passwordSetupForm').addEventListener('submit', savePassword);
-            document.getElementById('passwordVerifyForm').addEventListener('submit', processWithdrawal);
-            document.getElementById('closePasswordVerify').addEventListener('click', closePasswordVerify);
-            document.getElementById('passwordResetLink').addEventListener('click', goToPasswordReset);
-            
-            // Block alert
-            document.getElementById('closeBlockAlert').addEventListener('click', closeBlockAlert);
-            document.getElementById('unblockAccountBtn').addEventListener('click', goToUnblockPage);
-            
-            // Success modal
-            document.getElementById('backHomeBtn').addEventListener('click', goToHomePage);
-            document.getElementById('joinGroupBtn').addEventListener('click', joinGroup);
-            document.getElementById('copySuccessId').addEventListener('click', copyTransactionId);
-            
-            // Deposit button and close alert
-            document.getElementById('depositBtn').addEventListener('click', goToDeposit);
-            document.getElementById('closeBalanceAlert').addEventListener('click', closeInsufficientBalanceAlert);
-            
-            // Amount input with fee calculation
-            document.getElementById('withdrawAmount').addEventListener('input', validateAmountWithFee);
-        }
-
-        // Page Navigation
-        function showHomePage() {
-            document.getElementById('homePage').style.display = 'block';
-            document.getElementById('amountPage').style.display = 'none';
-            document.getElementById('paymentPage').style.display = 'none';
-            closeAllModals();
-        }
-
-        function showAmountPage() {
-            document.getElementById('homePage').style.display = 'none';
-            document.getElementById('amountPage').style.display = 'block';
-            document.getElementById('paymentPage').style.display = 'none';
-            
-            // Auto-focus amount input
-            setTimeout(() => {
-                document.getElementById('withdrawAmount').focus();
-            }, 300);
-        }
-
-        function showPaymentPage() {
-            const amount = parseFloat(document.getElementById('withdrawAmount').value);
-            
-            if (!amount || amount <= 0) {
-                showAlert('Invalid Amount', 'Please enter a valid amount', 'error');
-                return;
-            }
-            
-            if (amount < paymentSettings.minWithdraw) {
-                showAlert('Minimum Amount', `Minimum withdrawal amount is $${paymentSettings.minWithdraw}`, 'error');
-                return;
-            }
-            
-            if (amount > paymentSettings.maxWithdraw) {
-                showAlert('Maximum Amount', `Maximum withdrawal amount is $${paymentSettings.maxWithdraw}`, 'error');
-                return;
-            }
-            
-            if (amount > userBalance) {
-                showInsufficientBalanceAlert();
-                return;
-            }
-            
-            currentWithdrawAmount = amount;
-            document.getElementById('homePage').style.display = 'none';
-            document.getElementById('amountPage').style.display = 'none';
-            document.getElementById('paymentPage').style.display = 'block';
-        }
-
-        // Validate Amount with Fee Calculation
-        function validateAmountWithFee() {
-            const amountInput = document.getElementById('withdrawAmount');
-            const continueBtn = document.getElementById('continueToPaymentBtn');
-            const feeDisplay = document.getElementById('feeDisplay');
-            const amount = parseFloat(amountInput.value);
-            
-            if (amount && amount > 0 && amount >= paymentSettings.minWithdraw && amount <= paymentSettings.maxWithdraw) {
-                continueBtn.disabled = false;
-                
-                // Calculate and display fee
-                if (paymentSettings.withdrawFee > 0) {
-                    const fee = (amount * paymentSettings.withdrawFee) / 100;
-                    const netAmount = amount - fee;
-                    
-                    document.getElementById('feeAmount').textContent = `$${fee.toFixed(2)}`;
-                    document.getElementById('netAmount').textContent = `$${netAmount.toFixed(2)}`;
-                    feeDisplay.style.display = 'block';
-                } else {
-                    feeDisplay.style.display = 'none';
-                }
-            } else {
-                continueBtn.disabled = true;
-                feeDisplay.style.display = 'none';
-            }
-        }
-
-        // Close Insufficient Balance Alert
-        function closeInsufficientBalanceAlert() {
-            document.getElementById('insufficientBalanceAlert').classList.remove('show');
-        }
-
-        // Payment Methods
-        function addPaymentMethod() {
-            const number = document.getElementById('paymentNumberInput').value.trim();
-
-            // Validation
-            if (!selectedPaymentMethod) {
-                showAlert('Required', 'Please select payment method first', 'error');
-                return;
-            }
-
-            if (!number) {
-                showAlert('Required', 'Please enter payment number', 'error');
-                return;
-            }
-
-            const regex = new RegExp(paymentMethods[selectedPaymentMethod].pattern);
-            if (!regex.test(number)) {
-                showAlert('Invalid', `Please enter valid ${paymentMethods[selectedPaymentMethod].label}`, 'warning');
-                return;
-            }
-
-            // Check for duplicate
-            if (savedPayments.some(p => p.method === selectedPaymentMethod && p.number === number)) {
-                showAlert('Duplicate', 'This payment method is already added', 'warning');
-                return;
-            }
-
-            // Add to saved payments
-            savedPayments.push({ 
-                method: selectedPaymentMethod, 
-                number: number,
-                logo: paymentMethods[selectedPaymentMethod].logo
-            });
-            renderSavedPayments();
-            
-            // Reset inputs
-            document.getElementById('paymentNumberInput').value = '';
-            
-            // Enable confirm button if we have at least one payment method
-            document.getElementById('confirmWithdrawBtn').disabled = savedPayments.length === 0;
-            
-            showAlert('Success', 'Payment method added successfully', 'success');
-        }
-
-        function renderSavedPayments() {
-            const container = document.getElementById('savedPayments');
-            container.innerHTML = '';
-            
-            if (savedPayments.length === 0) {
-                container.innerHTML = '<div style="color: #666; font-style: italic; padding: 10px; text-align: center;">No payment methods added yet</div>';
-                return;
-            }
-
-            savedPayments.forEach((payment, index) => {
-                const paymentEl = document.createElement('div');
-                paymentEl.className = 'saved-payment-item';
-                paymentEl.innerHTML = `
-                    <div class="saved-payment-info">
-                        <div class="saved-payment-logo" style="background-image: url(${payment.logo})"></div>
-                        <div>
-                            <div style="font-weight: 600; font-size: 0.9rem;">${payment.method}</div>
-                            <div style="font-size: 0.8rem; color: var(--text-light);">${payment.number}</div>
-                        </div>
-                    </div>
-                    <button class="delete-payment-btn" data-index="${index}">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-                container.appendChild(paymentEl);
-            });
-
-            // Add delete event listeners
-            document.querySelectorAll('.delete-payment-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const index = parseInt(this.getAttribute('data-index'));
-                    savedPayments.splice(index, 1);
-                    renderSavedPayments();
-                    document.getElementById('confirmWithdrawBtn').disabled = savedPayments.length === 0;
-                    showAlert('Removed', 'Payment method deleted', 'success');
-                });
-            });
-        }
-
-        function validatePaymentInput() {
-            // Real-time validation can be added here
-        }
-
-        function validatePaymentForm() {
-            const number = document.getElementById('paymentNumberInput').value.trim();
-            const method = selectedPaymentMethod;
-            
-            if (method && number) {
-                const regex = new RegExp(paymentMethods[method].pattern);
-                if (regex.test(number)) {
+            if (blockDoc.exists) {
+                const blockData = blockDoc.data();
+                if (blockData.userBlock === true) {
+                    isUserBlocked = true;
                     return true;
                 }
             }
+            isUserBlocked = false;
+            return false;
+        } catch (error) {
+            console.error('Error checking block status:', error);
+            isUserBlocked = false;
             return false;
         }
+    }
 
-        // Password Modals
-        function showPasswordSetupModal() {
-            document.getElementById('passwordSetupModal').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('passwordSetupModal').classList.add('show');
-            }, 10);
+    // Show Block Alert Popup (5 seconds auto close)
+    function showBlockAlertPopup() {
+        const blockAlert = document.getElementById('blockAlertPopup');
+        blockAlert.classList.add('show');
+        
+        // Auto close after 5 seconds
+        setTimeout(() => {
+            closeBlockAlert();
+        }, 10000);
+    }
+
+    // Close Block Alert
+    function closeBlockAlert() {
+        document.getElementById('blockAlertPopup').classList.remove('show');
+    }
+
+    // Show Block Overlay - PERMANENT BLOCK (No Close Button, Only Back Button)
+    function showBlockOverlay() {
+        document.getElementById('blockOverlay').style.display = 'flex';
+        // Hide all other content
+        document.getElementById('homePage').style.display = 'none';
+        document.getElementById('amountPage').style.display = 'none';
+        document.getElementById('paymentPage').style.display = 'none';
+    }
+
+    // Update User Profile with Photo
+    function updateUserProfile() {
+        const fullName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+        document.getElementById('profileName').textContent = fullName || 'User';
+        document.getElementById('userName').textContent = '@' + (userData.username || 'username');
+        document.getElementById('userId').textContent = 'ID: ' + userData.chatId;
+        
+        const profilePic = document.getElementById('profilePic');
+        if (userData.photoUrl) {
+            profilePic.style.backgroundImage = `url(${userData.photoUrl})`;
+            profilePic.textContent = '';
+        } else {
+            const initials = (userData.firstName ? userData.firstName.charAt(0).toUpperCase() : '') + 
+                           (userData.lastName ? userData.lastName.charAt(0).toUpperCase() : '');
+            profilePic.textContent = initials || 'U';
         }
+    }
 
-        function verifyPassword() {
-            if (savedPayments.length === 0) {
-                showAlert('Required', 'Please add at least one payment method', 'error');
-                return;
-            }
-            
-            // Check if user is blocked before showing password verification
-            if (isUserBlocked) {
-                showBlockAlertPopup();
-                return;
-            }
-            
-            document.getElementById('passwordVerifyModal').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('passwordVerifyModal').classList.add('show');
-            }, 10);
-        }
-
-        function closePasswordVerify() {
-            document.getElementById('passwordVerifyModal').classList.remove('show');
-            setTimeout(() => {
-                document.getElementById('passwordVerifyModal').style.display = 'none';
-            }, 300);
-        }
-
-        // Go to Password Reset Page
-        function goToPasswordReset() {
-            const baseUrl = window.location.origin;
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            const params = new URLSearchParams({
-                userId: userData.chatId,
-                userName: userData.username,
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                photoUrl: userData.photoUrl || '',
-                action: 'password_reset',
-                theme: isDarkMode ? 'dark' : 'light'
-            });
-            
-            window.location.href = `${baseUrl}/password-reset/index.html?${params.toString()}`;
-        }
-
-        // Go to Unblock Page
-        function goToUnblockPage() {
-            const baseUrl = window.location.origin;
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            const params = new URLSearchParams({
-                userId: userData.chatId,
-                userName: userData.username,
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                photoUrl: userData.photoUrl || '',
-                action: 'unblock',
-                theme: isDarkMode ? 'dark' : 'light'
-            });
-            
-            window.location.href = `${baseUrl}/unblock/index.html?${params.toString()}`;
-        }
-
-        // Go to Home Page with Reload
-        function goToHomePage() {
-            window.location.reload();
-        }
-
-        // Save Password
-        function savePassword(e) {
-            e.preventDefault();
-            
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            if (newPassword.length !== 6 || !/^\d+$/.test(newPassword)) {
-                showAlert('Invalid Password', 'Password must be exactly 6 digits', 'error');
-                return;
-            }
-            
-            if (newPassword !== confirmPassword) {
-                showAlert('Password Mismatch', 'Passwords do not match', 'error');
-                return;
-            }
-            
-            db.collection('userPassword').doc(userData.chatId).set({
-                password: newPassword,
-                createdAt: new Date()
-            })
-            .then(() => {
-                document.getElementById('passwordSetupModal').classList.remove('show');
-                setTimeout(() => {
-                    document.getElementById('passwordSetupModal').style.display = 'none';
-                }, 300);
-                showAlert('Success', 'Password set successfully', 'success');
+    // Load Payment Settings from new collection
+    function loadPaymentSettings() {
+        db.collection('withdrawSettings').doc('limits').get()
+            .then((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    paymentSettings.minWithdraw = data.minWithdraw || 50;
+                    paymentSettings.maxWithdraw = data.maxWithdraw || 50000;
+                    paymentSettings.withdrawFee = data.withdrawFee || 0;
+                }
+                updateLimitDisplay();
+                updateFeeDisplay(); // Add this line
             })
             .catch((error) => {
-                console.error('Error saving password:', error);
-                showAlert('Error', 'Failed to save password', 'error');
+                console.error('Error loading payment settings:', error);
+                updateLimitDisplay();
+                updateFeeDisplay(); // Add this line
             });
+    }
+
+    // Update fee display on first page
+    function updateFeeDisplay() {
+        const feeListItem = document.getElementById('feeText');
+        if (paymentSettings.withdrawFee > 0) {
+            feeListItem.innerHTML = `Withdrawal fee: ${paymentSettings.withdrawFee}%`;
+        } else {
+            feeListItem.innerHTML = 'No hidden fees';
+        }
+    }
+
+    function updateLimitDisplay() {
+        document.getElementById('minAmount').textContent = `৳${paymentSettings.minWithdraw}`;
+        document.getElementById('maxAmount').textContent = `৳${paymentSettings.maxWithdraw}`;
+        document.getElementById('minLimit').textContent = `৳${paymentSettings.minWithdraw}`;
+        document.getElementById('maxLimit').textContent = `৳${paymentSettings.maxWithdraw}`;
+    }
+
+    // Load Payment Methods in 3 Column Grid
+    function loadPaymentMethods() {
+        const container = document.getElementById('paymentMethodsGrid');
+        container.innerHTML = '';
+        
+        Object.keys(paymentMethods).forEach(method => {
+            const payment = paymentMethods[method];
+            const card = document.createElement('div');
+            card.className = 'payment-method-card';
+            card.innerHTML = `
+                <div class="payment-logo" style="background-image: url(${payment.logo})"></div>
+                <div class="payment-method-name">${method}</div>
+            `;
+            
+            card.addEventListener('click', () => selectPaymentMethod(method, card));
+            container.appendChild(card);
+        });
+    }
+
+    // Select Payment Method
+    function selectPaymentMethod(method, card) {
+        // Remove selected class from all
+        document.querySelectorAll('.payment-method-card').forEach(el => {
+            el.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked card
+        card.classList.add('selected');
+        
+        selectedPaymentMethod = method;
+        document.getElementById('paymentNumberInput').placeholder = paymentMethods[method].placeholder;
+        document.getElementById('paymentNumberInput').value = '';
+        
+        validatePaymentForm();
+    }
+
+    // Load User Data
+    function loadUserData() {
+        // Load balance
+        db.collection('userBalance').doc(userData.chatId).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    userBalance = data.mainBalance || data.balance || 0;
+                    document.getElementById('availableBalance').textContent = `৳${userBalance.toFixed(2)}`;
+                }
+            })
+            .catch((error) => {
+                console.error('Error loading balance:', error);
+            });
+
+        // Check password
+        db.collection('userPassword').doc(userData.chatId).get()
+            .then((doc) => {
+                if (!doc.exists) {
+                    setTimeout(() => {
+                        showPasswordSetupModal();
+                    }, 2000);
+                }
+            })
+            .catch((error) => {
+                console.error('Error checking password:', error);
+            });
+
+        // Load withdraw history from userWithdraw collection
+        loadWithdrawHistory();
+    }
+
+    // Setup Event Listeners
+    function setupEventListeners() {
+        // Navigation
+        document.getElementById('continueWithdrawBtn').addEventListener('click', showAmountPage);
+        document.getElementById('backToHome').addEventListener('click', showHomePage);
+        document.getElementById('backToAmount').addEventListener('click', showAmountPage);
+        document.getElementById('continueToPaymentBtn').addEventListener('click', showPaymentPage);
+        document.getElementById('confirmWithdrawBtn').addEventListener('click', verifyPassword);
+        
+        // Payment methods
+        document.getElementById('addPaymentBtn').addEventListener('click', addPaymentMethod);
+        document.getElementById('paymentNumberInput').addEventListener('input', validatePaymentInput);
+        
+        // Password modals
+        document.getElementById('passwordSetupForm').addEventListener('submit', savePassword);
+        document.getElementById('passwordVerifyForm').addEventListener('submit', processWithdrawal);
+        document.getElementById('closePasswordVerify').addEventListener('click', closePasswordVerify);
+        document.getElementById('passwordResetLink').addEventListener('click', goToPasswordReset);
+        
+        // Block alert
+        document.getElementById('closeBlockAlert').addEventListener('click', closeBlockAlert);
+        document.getElementById('unblockAccountBtn').addEventListener('click', goToUnblockPage);
+        
+        // Success modal
+        document.getElementById('backHomeBtn').addEventListener('click', goToHomePage);
+        document.getElementById('joinGroupBtn').addEventListener('click', joinGroup);
+        document.getElementById('copySuccessId').addEventListener('click', copyTransactionId);
+        
+        // Deposit button and close alert
+        document.getElementById('depositBtn').addEventListener('click', goToDeposit);
+        document.getElementById('closeBalanceAlert').addEventListener('click', closeInsufficientBalanceAlert);
+        
+        // Amount input with fee calculation
+        document.getElementById('withdrawAmount').addEventListener('input', validateAmountWithFee);
+    }
+
+    // Page Navigation
+    function showHomePage() {
+        document.getElementById('homePage').style.display = 'block';
+        document.getElementById('amountPage').style.display = 'none';
+        document.getElementById('paymentPage').style.display = 'none';
+        closeAllModals();
+    }
+
+    function showAmountPage() {
+        document.getElementById('homePage').style.display = 'none';
+        document.getElementById('amountPage').style.display = 'block';
+        document.getElementById('paymentPage').style.display = 'none';
+        
+        // Auto-focus amount input
+        setTimeout(() => {
+            document.getElementById('withdrawAmount').focus();
+        }, 300);
+    }
+
+    function showPaymentPage() {
+        const amount = parseFloat(document.getElementById('withdrawAmount').value);
+        
+        if (!amount || amount <= 0) {
+            showAlert('Invalid Amount', 'Please enter a valid amount', 'error');
+            return;
+        }
+        
+        if (amount < paymentSettings.minWithdraw) {
+            showAlert('Minimum Amount', `Minimum withdrawal amount is ৳${paymentSettings.minWithdraw}`, 'error');
+            return;
+        }
+        
+        if (amount > paymentSettings.maxWithdraw) {
+            showAlert('Maximum Amount', `Maximum withdrawal amount is ৳${paymentSettings.maxWithdraw}`, 'error');
+            return;
+        }
+        
+        if (amount > userBalance) {
+            showInsufficientBalanceAlert();
+            return;
+        }
+        
+        currentWithdrawAmount = amount;
+        document.getElementById('homePage').style.display = 'none';
+        document.getElementById('amountPage').style.display = 'none';
+        document.getElementById('paymentPage').style.display = 'block';
+    }
+
+    // Validate Amount with Fee Calculation
+    function validateAmountWithFee() {
+        const amountInput = document.getElementById('withdrawAmount');
+        const continueBtn = document.getElementById('continueToPaymentBtn');
+        const feeDisplay = document.getElementById('feeDisplay');
+        const amount = parseFloat(amountInput.value);
+        
+        if (amount && amount > 0 && amount >= paymentSettings.minWithdraw && amount <= paymentSettings.maxWithdraw) {
+            continueBtn.disabled = false;
+            
+            // Calculate and display fee
+            if (paymentSettings.withdrawFee > 0) {
+                const fee = (amount * paymentSettings.withdrawFee) / 100;
+                const netAmount = amount - fee;
+                
+                document.getElementById('feeAmount').textContent = `৳${fee.toFixed(2)}`;
+                document.getElementById('netAmount').textContent = `৳${netAmount.toFixed(2)}`;
+                feeDisplay.style.display = 'block';
+            } else {
+                feeDisplay.style.display = 'none';
+            }
+        } else {
+            continueBtn.disabled = true;
+            feeDisplay.style.display = 'none';
+        }
+    }
+
+    // Close Insufficient Balance Alert
+    function closeInsufficientBalanceAlert() {
+        document.getElementById('insufficientBalanceAlert').classList.remove('show');
+    }
+
+    // Payment Methods
+    function addPaymentMethod() {
+        const number = document.getElementById('paymentNumberInput').value.trim();
+
+        // Validation
+        if (!selectedPaymentMethod) {
+            showAlert('Required', 'Please select payment method first', 'error');
+            return;
         }
 
-        // Process Withdrawal with Block System
-        async function processWithdrawal(e) {
-            e.preventDefault();
-            
-            const enteredPassword = document.getElementById('verifyPassword').value;
-            
-            // Verify password
-            db.collection('userPassword').doc(userData.chatId).get()
-                .then(async (doc) => {
-                    if (!doc.exists || doc.data().password !== enteredPassword) {
-                        wrongPasswordAttempts++;
-                        
-                        // Update wrong password attempts in userBlockList
-                        await db.collection('userBlockList').doc(userData.chatId).set({
-                            enterWrongPassword: wrongPasswordAttempts,
-                            lastAttempt: new Date()
-                        }, { merge: true });
-                        
-                        if (wrongPasswordAttempts >= 3) {
-                            // Block user after 3 wrong attempts
-                            await blockUser();
-                            closePasswordVerify();
-                            return;
-                        }
-                        
-                        const attemptsLeft = 3 - wrongPasswordAttempts;
-                        showAlert('Wrong Password', `Incorrect password. ${attemptsLeft} attempts remaining`, 'error');
+        if (!number) {
+            showAlert('Required', 'Please enter payment number', 'error');
+            return;
+        }
+
+        const regex = new RegExp(paymentMethods[selectedPaymentMethod].pattern);
+        if (!regex.test(number)) {
+            showAlert('Invalid', `Please enter valid ${paymentMethods[selectedPaymentMethod].label}`, 'warning');
+            return;
+        }
+
+        // Check for duplicate
+        if (savedPayments.some(p => p.method === selectedPaymentMethod && p.number === number)) {
+            showAlert('Duplicate', 'This payment method is already added', 'warning');
+            return;
+        }
+
+        // Add to saved payments
+        savedPayments.push({ 
+            method: selectedPaymentMethod, 
+            number: number,
+            logo: paymentMethods[selectedPaymentMethod].logo
+        });
+        renderSavedPayments();
+        
+        // Reset inputs
+        document.getElementById('paymentNumberInput').value = '';
+        
+        // Enable confirm button if we have at least one payment method
+        document.getElementById('confirmWithdrawBtn').disabled = savedPayments.length === 0;
+        
+        showAlert('Success', 'Payment method added successfully', 'success');
+    }
+
+    function renderSavedPayments() {
+        const container = document.getElementById('savedPayments');
+        container.innerHTML = '';
+        
+        if (savedPayments.length === 0) {
+            container.innerHTML = '<div style="color: #666; font-style: italic; padding: 10px; text-align: center;">No payment methods added yet</div>';
+            return;
+        }
+
+        savedPayments.forEach((payment, index) => {
+            const paymentEl = document.createElement('div');
+            paymentEl.className = 'saved-payment-item';
+            paymentEl.innerHTML = `
+                <div class="saved-payment-info">
+                    <div class="saved-payment-logo" style="background-image: url(${payment.logo})"></div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">${payment.method}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-light);">${payment.number}</div>
+                    </div>
+                </div>
+                <button class="delete-payment-btn" data-index="${index}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(paymentEl);
+        });
+
+        // Add delete event listeners
+        document.querySelectorAll('.delete-payment-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                savedPayments.splice(index, 1);
+                renderSavedPayments();
+                document.getElementById('confirmWithdrawBtn').disabled = savedPayments.length === 0;
+                showAlert('Removed', 'Payment method deleted', 'success');
+            });
+        });
+    }
+
+    function validatePaymentInput() {
+        // Real-time validation can be added here
+    }
+
+    function validatePaymentForm() {
+        const number = document.getElementById('paymentNumberInput').value.trim();
+        const method = selectedPaymentMethod;
+        
+        if (method && number) {
+            const regex = new RegExp(paymentMethods[method].pattern);
+            if (regex.test(number)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Password Modals
+    function showPasswordSetupModal() {
+        document.getElementById('passwordSetupModal').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('passwordSetupModal').classList.add('show');
+        }, 10);
+    }
+
+    function verifyPassword() {
+        if (savedPayments.length === 0) {
+            showAlert('Required', 'Please add at least one payment method', 'error');
+            return;
+        }
+        
+        // Check if user is blocked before showing password verification
+        if (isUserBlocked) {
+            showBlockAlertPopup();
+            return;
+        }
+        
+        document.getElementById('passwordVerifyModal').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('passwordVerifyModal').classList.add('show');
+        }, 10);
+    }
+
+    function closePasswordVerify() {
+        document.getElementById('passwordVerifyModal').classList.remove('show');
+        setTimeout(() => {
+            document.getElementById('passwordVerifyModal').style.display = 'none';
+        }, 300);
+    }
+
+    // Go to Password Reset Page
+    function goToPasswordReset() {
+        const baseUrl = window.location.origin;
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        const params = new URLSearchParams({
+            userId: userData.chatId,
+            userName: userData.username,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            photoUrl: userData.photoUrl || '',
+            action: 'password_reset',
+            theme: isDarkMode ? 'dark' : 'light'
+        });
+        
+        window.location.href = `${baseUrl}/password-reset/index.html?${params.toString()}`;
+    }
+
+    // Go to Unblock Page
+    function goToUnblockPage() {
+        const baseUrl = window.location.origin;
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        const params = new URLSearchParams({
+            userId: userData.chatId,
+            userName: userData.username,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            photoUrl: userData.photoUrl || '',
+            action: 'unblock',
+            theme: isDarkMode ? 'dark' : 'light'
+        });
+        
+        window.location.href = `${baseUrl}/unblock/index.html?${params.toString()}`;
+    }
+
+    // Go to Home Page with Reload
+    function goToHomePage() {
+        window.location.reload();
+    }
+
+    // Save Password
+    function savePassword(e) {
+        e.preventDefault();
+        
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        if (newPassword.length !== 6 || !/^\d+$/.test(newPassword)) {
+            showAlert('Invalid Password', 'Password must be exactly 6 digits', 'error');
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            showAlert('Password Mismatch', 'Passwords do not match', 'error');
+            return;
+        }
+        
+        db.collection('userPassword').doc(userData.chatId).set({
+            password: newPassword,
+            createdAt: new Date()
+        })
+        .then(() => {
+            document.getElementById('passwordSetupModal').classList.remove('show');
+            setTimeout(() => {
+                document.getElementById('passwordSetupModal').style.display = 'none';
+            }, 300);
+            showAlert('Success', 'Password set successfully', 'success');
+        })
+        .catch((error) => {
+            console.error('Error saving password:', error);
+            showAlert('Error', 'Failed to save password', 'error');
+        });
+    }
+
+    // Process Withdrawal with Block System
+    async function processWithdrawal(e) {
+        e.preventDefault();
+        
+        const enteredPassword = document.getElementById('verifyPassword').value;
+        
+        // Verify password
+        db.collection('userPassword').doc(userData.chatId).get()
+            .then(async (doc) => {
+                if (!doc.exists || doc.data().password !== enteredPassword) {
+                    wrongPasswordAttempts++;
+                    
+                    // Update wrong password attempts in userBlockList
+                    await db.collection('userBlockList').doc(userData.chatId).set({
+                        enterWrongPassword: wrongPasswordAttempts,
+                        lastAttempt: new Date()
+                    }, { merge: true });
+                    
+                    if (wrongPasswordAttempts >= 3) {
+                        // Block user after 3 wrong attempts
+                        await blockUser();
+                        closePasswordVerify();
                         return;
                     }
                     
-                    // Password correct, reset attempts and process withdrawal
-                    wrongPasswordAttempts = 0;
-                    await db.collection('userBlockList').doc(userData.chatId).update({
-                        enterWrongPassword: 0
-                    });
-                    closePasswordVerify();
-                    submitWithdrawRequest();
-                })
-                .catch((error) => {
-                    console.error('Error verifying password:', error);
-                    showAlert('Error', 'Failed to verify password', 'error');
+                    const attemptsLeft = 3 - wrongPasswordAttempts;
+                    showAlert('Wrong Password', `Incorrect password. ${attemptsLeft} attempts remaining`, 'error');
+                    return;
+                }
+                
+                // Password correct, reset attempts and process withdrawal
+                wrongPasswordAttempts = 0;
+                await db.collection('userBlockList').doc(userData.chatId).update({
+                    enterWrongPassword: 0
                 });
-        }
+                closePasswordVerify();
+                submitWithdrawRequest();
+            })
+            .catch((error) => {
+                console.error('Error verifying password:', error);
+                showAlert('Error', 'Failed to verify password', 'error');
+            });
+    }
 
-        // Block User in userBlockList collection
-        async function blockUser() {
-            try {
-                await db.collection('userBlockList').doc(userData.chatId).set({
-                    userBlock: true,
-                    enterWrongPassword: 3,
-                    blockedAt: new Date(),
-                    blockReason: 'Multiple wrong password attempts'
+    // Block User in userBlockList collection
+    async function blockUser() {
+        try {
+            await db.collection('userBlockList').doc(userData.chatId).set({
+                userBlock: true,
+                enterWrongPassword: 3,
+                blockedAt: new Date(),
+                blockReason: 'Multiple wrong password attempts'
+            });
+            
+            isUserBlocked = true;
+            showBlockAlertPopup();
+            showAlert('Account Blocked', 'Your account has been blocked due to multiple incorrect password attempts', 'error');
+        } catch (error) {
+            console.error('Error blocking user:', error);
+        }
+    }
+
+    // Submit Withdraw Request with Fee Calculation
+    function submitWithdrawRequest() {
+        // Calculate fee
+        const fee = paymentSettings.withdrawFee > 0 ? 
+            (currentWithdrawAmount * paymentSettings.withdrawFee) / 100 : 0;
+        const netAmount = currentWithdrawAmount - fee;
+
+        const requestData = {
+            userId: userData.chatId,
+            username: userData.username,
+            fullName: `${userData.firstName} ${userData.lastName}`.trim(),
+            amount: currentWithdrawAmount,
+            fee: fee,
+            netAmount: netAmount,
+            paymentMethods: savedPayments,
+            status: 'pending',
+            createdAt: new Date()
+        };
+        
+        // Save to userWithdraw collection
+        db.collection('userWithdraw').add(requestData)
+            .then((docRef) => {
+                const transactionId = docRef.id;
+                
+                // Update user balance
+                const newBalance = userBalance - currentWithdrawAmount;
+                db.collection('userBalance').doc(userData.chatId).update({
+                    mainBalance: newBalance
                 });
                 
-                isUserBlocked = true;
-                showBlockAlertPopup();
-                showAlert('Account Blocked', 'Your account has been blocked due to multiple incorrect password attempts', 'error');
-            } catch (error) {
-                console.error('Error blocking user:', error);
-            }
-        }
-
-        // Submit Withdraw Request with Fee Calculation
-        function submitWithdrawRequest() {
-            // Calculate fee
-            const fee = paymentSettings.withdrawFee > 0 ? 
-                (currentWithdrawAmount * paymentSettings.withdrawFee) / 100 : 0;
-            const netAmount = currentWithdrawAmount - fee;
-
-            const requestData = {
-                userId: userData.chatId,
-                username: userData.username,
-                fullName: `${userData.firstName} ${userData.lastName}`.trim(),
-                amount: currentWithdrawAmount,
-                fee: fee,
-                netAmount: netAmount,
-                paymentMethods: savedPayments,
-                status: 'pending',
-                createdAt: new Date()
-            };
-            
-            // Save to userWithdraw collection
-            db.collection('userWithdraw').add(requestData)
-                .then((docRef) => {
-                    const transactionId = docRef.id;
-                    
-                    // Update user balance
-                    const newBalance = userBalance - currentWithdrawAmount;
-                    db.collection('userBalance').doc(userData.chatId).update({
-                        mainBalance: newBalance
-                    });
-                    
-                    // Send Telegram notifications
-                    sendTelegramNotifications(transactionId, fee, netAmount);
-                    
-                    // Show success modal
-                    showSuccessModal(transactionId, fee);
-                    
-                    // Reload history to show new request
-                    loadWithdrawHistory();
-                })
-                .catch((error) => {
-                    console.error('Error submitting withdrawal:', error);
-                    showAlert('Error', 'Failed to submit withdrawal request', 'error');
-                });
-        }
-
-        // Send Telegram Notifications with Fee Information
-        async function sendTelegramNotifications(transactionId, fee, netAmount) {
-            // User confirmation
-            const userMessage = `✅ <b>Withdrawal Request Submitted</b>\n\n` +
-                               `Your withdrawal request of <b>${currentWithdrawAmount}৳</b> has been successfully submitted.\n\n` +
-                               `<b>Transaction ID:</b> <code>${transactionId}</code>\n` +
-                               `<b>Fee:</b> ${fee}৳\n` +
-                               `<b>You will receive:</b> ${netAmount}৳\n` +
-                               `<b>Status:</b> Pending Review\n\n` +
-                               `We will process your request shortly.`;
-            
-            await sendTelegramMessage(userData.chatId, userMessage);
-            
-            // Admin notification
-            const paymentMethodsText = savedPayments.map(p => 
-                `• ${p.method}: <code>${p.number}</code>`
-            ).join('\n');
-            
-            const adminMessage = `🚨 <b>New Withdrawal Request</b>\n\n` +
-                                `<b>User:</b> ${userData.firstName} ${userData.lastName} (@${userData.username})\n` +
-                                `<b>User ID:</b> <code>${userData.chatId}</code>\n` +
-                                `<b>Amount:</b> ${currentWithdrawAmount}৳\n` +
-                                `<b>Fee:</b> ${fee}৳\n` +
-                                `<b>Net Amount:</b> ${netAmount}৳\n\n` +
-                                `<b>Payment Methods:</b>\n${paymentMethodsText}\n\n` +
-                                `<b>Transaction ID:</b> <code>${transactionId}</code>`;
-            
-            await sendTelegramMessage(ADMIN_CHANNEL_ID, adminMessage);
-        }
-
-        async function sendTelegramMessage(chatId, message) {
-            try {
-                const response = await fetch(BOT_API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: message,
-                        parse_mode: 'HTML'
-                    })
-                });
+                // Send Telegram notifications
+                sendTelegramNotifications(transactionId, fee, netAmount);
                 
-                return await response.json();
-            } catch (error) {
-                console.error('Error sending Telegram message:', error);
-            }
-        }
+                // Show success modal
+                showSuccessModal(transactionId, fee);
+                
+                // Reload history to show new request
+                loadWithdrawHistory();
+            })
+            .catch((error) => {
+                console.error('Error submitting withdrawal:', error);
+                showAlert('Error', 'Failed to submit withdrawal request', 'error');
+            });
+    }
 
-        // Show Success Modal - MODERN DESIGN with Fee Information
-        function showSuccessModal(transactionId, fee) {
-            document.getElementById('successAmount').textContent = `৳${currentWithdrawAmount.toFixed(2)}`;
-            document.getElementById('successTransactionId').textContent = transactionId;
-            document.getElementById('successDate').textContent = new Date().toLocaleString();
+    // Send Telegram Notifications with Fee Information - UPDATED FORMAT
+    async function sendTelegramNotifications(transactionId, fee, netAmount) {
+        // User confirmation - UPDATED FORMAT
+        const userMessage = `💰 *Withdrawal Request Submitted*\n\n` +
+                           `*Amount:* ${currentWithdrawAmount}৳\n` +
+                           `*Fee:* ${fee.toFixed(2)}৳\n` +
+                           `*You will receive:* ${netAmount.toFixed(2)}৳\n` +
+                           `*Transaction ID:* \`${transactionId}\`\n` +
+                           `*Status:* ⏳ Pending Review\n\n` +
+                           `We will process your request within 24-48 hours.`;
+        
+        await sendTelegramMessage(userData.chatId, userMessage);
+        
+        // Admin notification - UPDATED FORMAT
+        const paymentMethodsText = savedPayments.map(p => 
+            `▫️ *${p.method}:* \`${p.number}\``
+        ).join('\n');
+        
+        const adminMessage = `🔄 *NEW WITHDRAWAL REQUEST*\n\n` +
+                            `👤 *User Details:*\n` +
+                            `• *Name:* ${userData.firstName} ${userData.lastName}\n` +
+                            `• *Username:* @${userData.username}\n` +
+                            `• *User ID:* \`${userData.chatId}\`\n\n` +
+                            `💰 *Payment Details:*\n` +
+                            `• *Amount:* ${currentWithdrawAmount}৳\n` +
+                            `• *Fee:* ${fee.toFixed(2)}৳\n` +
+                            `• *Net Amount:* ${netAmount.toFixed(2)}৳\n` +
+                            `• *Transaction ID:* \`${transactionId}\`\n\n` +
+                            `💳 *Payment Methods:*\n${paymentMethodsText}\n\n` +
+                            `⏰ *Time:* ${new Date().toLocaleString()}`;
+        
+        await sendTelegramMessage(ADMIN_CHANNEL_ID, adminMessage);
+    }
+
+    async function sendTelegramMessage(chatId, message) {
+        try {
+            const response = await fetch(BOT_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: message,
+                    parse_mode: 'Markdown' // Changed from HTML to Markdown for better formatting
+                })
+            });
             
-            // Update fee in success modal
-            const feeElements = document.querySelectorAll('.success-detail-item');
-            feeElements[2].querySelector('.success-detail-value').textContent = `৳${fee.toFixed(2)}`;
+            const result = await response.json();
+            if (!result.ok) {
+                console.error('Telegram API error:', result);
+            }
+            return result;
+        } catch (error) {
+            console.error('Error sending Telegram message:', error);
+            return { ok: false };
+        }
+    }
+
+    // Show Success Modal - MODERN DESIGN with Fee Information
+    function showSuccessModal(transactionId, fee) {
+        document.getElementById('successAmount').textContent = `৳${currentWithdrawAmount.toFixed(2)}`;
+        document.getElementById('successTransactionId').textContent = transactionId;
+        document.getElementById('successDate').textContent = new Date().toLocaleString();
+        
+        // Update fee in success modal
+        const feeElements = document.querySelectorAll('.success-detail-item');
+        feeElements[2].querySelector('.success-detail-value').textContent = `৳${fee.toFixed(2)}`;
+        
+        const successModal = document.getElementById('successModal');
+        successModal.style.display = 'block';
+        
+        setTimeout(() => {
+            successModal.classList.add('show');
+            createConfetti();
+        }, 100);
+        
+        // Reset form
+        savedPayments = [];
+        renderSavedPayments();
+        document.getElementById('withdrawAmount').value = '';
+        document.getElementById('confirmWithdrawBtn').disabled = true;
+        document.getElementById('feeDisplay').style.display = 'none';
+    }
+
+    // Create Confetti Effect
+    function createConfetti() {
+        const colors = ['#06d6a0', '#2563eb', '#8b5cf6', '#f59e0b', '#ef4444'];
+        const container = document.body;
+        
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.top = '-10px';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+            confetti.style.width = Math.random() * 10 + 5 + 'px';
+            confetti.style.height = Math.random() * 10 + 5 + 'px';
             
-            const successModal = document.getElementById('successModal');
-            successModal.style.display = 'block';
+            container.appendChild(confetti);
+            
+            // Animation
+            const animation = confetti.animate([
+                { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
+                { transform: `translateY(${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+            ], {
+                duration: Math.random() * 3000 + 2000,
+                easing: 'cubic-bezier(0.215, 0.610, 0.355, 1)'
+            });
+            
+            animation.onfinish = () => confetti.remove();
+        }
+    }
+
+    // Close All Modals
+    function closeAllModals() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            if (!modal.classList.contains('password-modal')) {
+                modal.style.display = 'none';
+                modal.classList.remove('show');
+            }
+        });
+        
+        // Close success modal
+        const successModal = document.getElementById('successModal');
+        successModal.style.display = 'none';
+        successModal.classList.remove('show');
+    }
+
+    // Copy Transaction ID - UPDATED
+    function copyTransactionId() {
+        const transactionId = document.getElementById('successTransactionId').textContent;
+        navigator.clipboard.writeText(transactionId).then(() => {
+            // Show temporary success state
+            const copyBtn = document.getElementById('copySuccessId');
+            const originalHtml = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            copyBtn.style.background = 'var(--accent)';
             
             setTimeout(() => {
-                successModal.classList.add('show');
-                createConfetti();
-            }, 100);
+                copyBtn.innerHTML = originalHtml;
+                copyBtn.style.background = '';
+            }, 2000);
             
-            // Reset form
-            savedPayments = [];
-            renderSavedPayments();
-            document.getElementById('withdrawAmount').value = '';
-            document.getElementById('confirmWithdrawBtn').disabled = true;
-            document.getElementById('feeDisplay').style.display = 'none';
+            showAlert('Copied!', 'Transaction ID copied to clipboard', 'success');
+        }).catch(() => {
+            showAlert('Error', 'Failed to copy transaction ID', 'error');
+        });
+    }
+
+    // Join Group
+    function joinGroup() {
+        window.open('https://t.me/your_group_link', '_blank');
+    }
+
+    // Go to Deposit with User Data
+    function goToDeposit() {
+        const baseUrl = window.location.origin;
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        const params = new URLSearchParams({
+            userId: userData.chatId,
+            userName: userData.username,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            photoUrl: userData.photoUrl || '',
+            action: 'deposit',
+            theme: isDarkMode ? 'dark' : 'light'
+        });
+        
+        window.location.href = `${baseUrl}/deposit/index.html?${params.toString()}`;
+    }
+
+    // Show Insufficient Balance Alert
+    function showInsufficientBalanceAlert() {
+        document.getElementById('insufficientBalanceAlert').classList.add('show');
+    }
+
+    // Load Withdraw History from userWithdraw collection - IMPROVED WITH USER SPECIFIC DATA
+    function loadWithdrawHistory() {
+        if (!userData || !userData.chatId) {
+            console.error('User data not available');
+            return;
         }
 
-        // Create Confetti Effect
-        function createConfetti() {
-            const colors = ['#06d6a0', '#2563eb', '#8b5cf6', '#f59e0b', '#ef4444'];
-            const container = document.body;
-            
-            for (let i = 0; i < 50; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.left = Math.random() * 100 + 'vw';
-                confetti.style.top = '-10px';
-                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-                confetti.style.width = Math.random() * 10 + 5 + 'px';
-                confetti.style.height = Math.random() * 10 + 5 + 'px';
+        db.collection('userWithdraw')
+            .where('userId', '==', userData.chatId)
+            .orderBy('createdAt', 'desc')
+            .get()
+            .then((querySnapshot) => {
+                const historyList = document.getElementById('historyList');
+                historyList.innerHTML = '';
                 
-                container.appendChild(confetti);
-                
-                // Animation
-                const animation = confetti.animate([
-                    { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
-                    { transform: `translateY(${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
-                ], {
-                    duration: Math.random() * 3000 + 2000,
-                    easing: 'cubic-bezier(0.215, 0.610, 0.355, 1)'
-                });
-                
-                animation.onfinish = () => confetti.remove();
-            }
-        }
-
-        // Close All Modals
-        function closeAllModals() {
-            document.querySelectorAll('.modal').forEach(modal => {
-                if (!modal.classList.contains('password-modal')) {
-                    modal.style.display = 'none';
-                    modal.classList.remove('show');
-                }
-            });
-            
-            // Close success modal
-            const successModal = document.getElementById('successModal');
-            successModal.style.display = 'none';
-            successModal.classList.remove('show');
-        }
-
-        // Copy Transaction ID
-        function copyTransactionId() {
-            const transactionId = document.getElementById('successTransactionId').textContent;
-            navigator.clipboard.writeText(transactionId).then(() => {
-                showAlert('Copied!', 'Transaction ID copied to clipboard', 'success');
-            });
-        }
-
-        // Join Group
-        function joinGroup() {
-            window.open('https://t.me/your_group_link', '_blank');
-        }
-
-        // Go to Deposit with User Data
-        function goToDeposit() {
-            const baseUrl = window.location.origin;
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            const params = new URLSearchParams({
-                userId: userData.chatId,
-                userName: userData.username,
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                photoUrl: userData.photoUrl || '',
-                action: 'deposit',
-                theme: isDarkMode ? 'dark' : 'light'
-            });
-            
-            window.location.href = `${baseUrl}/deposit/index.html?${params.toString()}`;
-        }
-
-        // Show Insufficient Balance Alert
-        function showInsufficientBalanceAlert() {
-            document.getElementById('insufficientBalanceAlert').classList.add('show');
-        }
-
-        // Load Withdraw History from userWithdraw collection - IMPROVED WITH USER SPECIFIC DATA
-        function loadWithdrawHistory() {
-            if (!userData || !userData.chatId) {
-                console.error('User data not available');
-                return;
-            }
-
-            db.collection('userWithdraw')
-                .where('userId', '==', userData.chatId)
-                .orderBy('createdAt', 'desc')
-                .get()
-                .then((querySnapshot) => {
-                    const historyList = document.getElementById('historyList');
-                    historyList.innerHTML = '';
-                    
-                    if (querySnapshot.empty) {
-                        historyList.innerHTML = `
-                            <div class="no-history">
-                                <i class="fas fa-receipt"></i>
-                                <div>No withdrawal history found</div>
-                                <div style="font-size: 0.8rem; margin-top: 10px; color: var(--text-light);">
-                                    Your withdrawal requests will appear here
-                                </div>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    querySnapshot.forEach((doc) => {
-                        const request = doc.data();
-                        const historyItem = createHistoryItem(request, doc.id);
-                        historyList.appendChild(historyItem);
-                    });
-                })
-                .catch((error) => {
-                    console.error('Error loading history:', error);
-                    const historyList = document.getElementById('historyList');
+                if (querySnapshot.empty) {
                     historyList.innerHTML = `
                         <div class="no-history">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <div>Error loading history</div>
+                            <i class="fas fa-receipt"></i>
+                            <div>No withdrawal history found</div>
                             <div style="font-size: 0.8rem; margin-top: 10px; color: var(--text-light);">
-                                Please try again later
+                                Your withdrawal requests will appear here
                             </div>
                         </div>
                     `;
+                    return;
+                }
+                
+                querySnapshot.forEach((doc) => {
+                    const request = doc.data();
+                    const historyItem = createHistoryItem(request, doc.id);
+                    historyList.appendChild(historyItem);
                 });
-        }
-
-        // Create History Item - IMPROVED WITH BETTER UI
-        function createHistoryItem(request, docId) {
-            const date = request.createdAt?.toDate ? request.createdAt.toDate() : new Date(request.createdAt);
-            const formattedDate = date.toLocaleDateString();
-            const formattedTime = date.toLocaleTimeString();
-            
-            // Get payment methods for display
-            const paymentMethods = request.paymentMethods || [];
-            const primaryMethod = paymentMethods.length > 0 ? paymentMethods[0] : { method: 'Unknown', number: 'N/A' };
-            
-            const historyItem = document.createElement('div');
-            historyItem.className = 'history-item';
-            historyItem.innerHTML = `
-                <div class="history-header">
-                    <span class="history-timestamp" title="${docId}">
-                        <i class="fas fa-hashtag"></i> ${docId.substring(0, 8)}...
-                    </span>
-                    <span class="history-amount">
-                        <i class="fas fa-money-bill-wave"></i> ${request.amount} ৳
-                    </span>
-                </div>
-                <div class="history-payment-method">
-                    <i class="fas fa-wallet"></i> ${primaryMethod.method}: ${primaryMethod.number}
-                    ${paymentMethods.length > 1 ? ` +${paymentMethods.length - 1} more` : ''}
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                    <span class="history-date">
-                        <i class="fas fa-calendar"></i> ${formattedDate} ${formattedTime}
-                    </span>
-                    <span class="history-status status-${request.status}">
-                        ${request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                    </span>
-                </div>
-            `;
-            
-            historyItem.addEventListener('click', function() {
-                showWithdrawDetails(request, docId);
-            });
-            
-            return historyItem;
-        }
-
-        // Show Withdraw Details
-        function showWithdrawDetails(request, docId) {
-            const date = request.createdAt?.toDate ? request.createdAt.toDate() : new Date(request.createdAt);
-            const formattedDate = date.toLocaleDateString();
-            const formattedTime = date.toLocaleTimeString();
-            
-            let paymentMethodsText = '';
-            if (request.paymentMethods && request.paymentMethods.length > 0) {
-                paymentMethodsText = request.paymentMethods.map(p => 
-                    `<div style="margin: 5px 0; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                        <strong>${p.method}:</strong> ${p.number}
-                    </div>`
-                ).join('');
-            }
-            
-            const detailMessage = `
-                <div style="text-align: left; max-height: 400px; overflow-y: auto;">
-                    <div style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px;">
-                        <strong>Amount:</strong> ${request.amount}৳<br>
-                        <strong>Fee:</strong> ${request.fee || 0}৳<br>
-                        <strong>Net Amount:</strong> ${request.netAmount || request.amount}৳<br>
-                        <strong>Status:</strong> <span class="status-${request.status}">${request.status}</span><br>
-                        <strong>Date:</strong> ${formattedDate}<br>
-                        <strong>Time:</strong> ${formattedTime}<br>
-                        <strong>Transaction ID:</strong> <span style="font-family: monospace; font-size: 0.8rem; word-break: break-all;">${docId}</span>
-                    </div>
-                    ${paymentMethodsText ? `
-                    <div style="margin-bottom: 15px;">
-                        <strong style="display: block; margin-bottom: 8px;">Payment Methods:</strong>
-                        ${paymentMethodsText}
-                    </div>
-                    ` : ''}
-                </div>
-            `;
-            
-            showAlert('Withdrawal Details', detailMessage, 'info');
-        }
-
-        // Search History
-        function searchHistory() {
-            const searchTerm = document.getElementById('searchHistory').value.toLowerCase();
-            const historyItems = document.querySelectorAll('.history-item');
-            
-            let foundItems = 0;
-            
-            historyItems.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    item.style.display = 'block';
-                    foundItems++;
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-            
-            // Show no results message if no items found
-            if (foundItems === 0 && searchTerm !== '') {
+            })
+            .catch((error) => {
+                console.error('Error loading history:', error);
                 const historyList = document.getElementById('historyList');
-                const noResults = document.createElement('div');
-                noResults.className = 'no-history';
-                noResults.innerHTML = `
-                    <i class="fas fa-search"></i>
-                    <div>No results found for "${searchTerm}"</div>
+                historyList.innerHTML = `
+                    <div class="no-history">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>Error loading history</div>
+                        <div style="font-size: 0.8rem; margin-top: 10px; color: var(--text-light);">
+                            Please try again later
+                        </div>
+                    </div>
                 `;
-                historyList.appendChild(noResults);
-            }
-        }
-
-        // Show Alert - ছোট এবং ডান পাশে কোনায়
-        function showAlert(title, text, icon) {
-            Swal.fire({
-                title: title,
-                html: text,
-                icon: icon,
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 4000,
-                timerProgressBar: true,
-                customClass: {
-                    popup: 'mini-alert-popup',
-                    title: 'mini-alert-title',
-                    icon: 'mini-alert-icon'
-                }
             });
-        }
-    </script>
+    }
 
-    <style>
-        /* SweetAlert Custom Styles for Mini Alerts */
-        .mini-alert-popup {
-            width: auto !important;
-            min-width: 300px !important;
-            font-size: 14px !important;
-            padding: 10px 15px !important;
-        }
+    // Create History Item - IMPROVED WITH BETTER UI
+    function createHistoryItem(request, docId) {
+        const date = request.createdAt?.toDate ? request.createdAt.toDate() : new Date(request.createdAt);
+        const formattedDate = date.toLocaleDateString();
+        const formattedTime = date.toLocaleTimeString();
+        
+        // Get payment methods for display
+        const paymentMethods = request.paymentMethods || [];
+        const primaryMethod = paymentMethods.length > 0 ? paymentMethods[0] : { method: 'Unknown', number: 'N/A' };
+        
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        historyItem.innerHTML = `
+            <div class="history-header">
+                <span class="history-timestamp" title="${docId}">
+                    <i class="fas fa-hashtag"></i> ${docId.substring(0, 8)}...
+                </span>
+                <span class="history-amount">
+                    <i class="fas fa-money-bill-wave"></i> ${request.amount} ৳
+                </span>
+            </div>
+            <div class="history-payment-method">
+                <i class="fas fa-wallet"></i> ${primaryMethod.method}: ${primaryMethod.number}
+                ${paymentMethods.length > 1 ? ` +${paymentMethods.length - 1} more` : ''}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                <span class="history-date">
+                    <i class="fas fa-calendar"></i> ${formattedDate} ${formattedTime}
+                </span>
+                <span class="history-status status-${request.status}">
+                    ${request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                </span>
+            </div>
+        `;
+        
+        historyItem.addEventListener('click', function() {
+            showWithdrawDetails(request, docId);
+        });
+        
+        return historyItem;
+    }
 
-        .mini-alert-title {
-            font-size: 16px !important;
-            margin-bottom: 8px !important;
+    // Show Withdraw Details
+    function showWithdrawDetails(request, docId) {
+        const date = request.createdAt?.toDate ? request.createdAt.toDate() : new Date(request.createdAt);
+        const formattedDate = date.toLocaleDateString();
+        const formattedTime = date.toLocaleTimeString();
+        
+        let paymentMethodsText = '';
+        if (request.paymentMethods && request.paymentMethods.length > 0) {
+            paymentMethodsText = request.paymentMethods.map(p => 
+                `<div style="margin: 5px 0; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                    <strong>${p.method}:</strong> ${p.number}
+                </div>`
+            ).join('');
         }
+        
+        const detailMessage = `
+            <div style="text-align: left; max-height: 400px; overflow-y: auto;">
+                <div style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+                    <strong>Amount:</strong> ${request.amount}৳<br>
+                    <strong>Fee:</strong> ${request.fee || 0}৳<br>
+                    <strong>Net Amount:</strong> ${request.netAmount || request.amount}৳<br>
+                    <strong>Status:</strong> <span class="status-${request.status}">${request.status}</span><br>
+                    <strong>Date:</strong> ${formattedDate}<br>
+                    <strong>Time:</strong> ${formattedTime}<br>
+                    <strong>Transaction ID:</strong> <span style="font-family: monospace; font-size: 0.8rem; word-break: break-all;">${docId}</span>
+                </div>
+                ${paymentMethodsText ? `
+                <div style="margin-bottom: 15px;">
+                    <strong style="display: block; margin-bottom: 8px;">Payment Methods:</strong>
+                    ${paymentMethodsText}
+                </div>
+                ` : ''}
+            </div>
+        `;
+        
+        showAlert('Withdrawal Details', detailMessage, 'info');
+    }
 
-        .mini-alert-icon {
-            width: 24px !important;
-            height: 24px !important;
+    // Search History
+    function searchHistory() {
+        const searchTerm = document.getElementById('searchHistory').value.toLowerCase();
+        const historyItems = document.querySelectorAll('.history-item');
+        
+        let foundItems = 0;
+        
+        historyItems.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                item.style.display = 'block';
+                foundItems++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Show no results message if no items found
+        if (foundItems === 0 && searchTerm !== '') {
+            const historyList = document.getElementById('historyList');
+            const noResults = document.createElement('div');
+            noResults.className = 'no-history';
+            noResults.innerHTML = `
+                <i class="fas fa-search"></i>
+                <div>No results found for "${searchTerm}"</div>
+            `;
+            historyList.appendChild(noResults);
         }
+    }
 
-        .swal2-popup.swal2-toast {
-            padding: 10px 15px !important;
-        }
-    </style>
+    // Show Alert - ছোট এবং ডান পাশে কোনায়
+    function showAlert(title, text, icon) {
+        Swal.fire({
+            title: title,
+            html: text,
+            icon: icon,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true,
+            customClass: {
+                popup: 'mini-alert-popup',
+                title: 'mini-alert-title',
+                icon: 'mini-alert-icon'
+            }
+        });
+    }
+</script>
 </body>
 </html>
