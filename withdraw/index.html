@@ -1167,7 +1167,7 @@
             
             <div class="search-container">
                 <i class="fas fa-search search-icon"></i>
-                <input type="text" id="searchHistory" placeholder="Search by transaction ID...">
+                <input type="text" id="searchHistory" placeholder="Search by TrxID...">
             </div>
             
             <div class="history-list" id="historyList">
@@ -1320,7 +1320,7 @@
             
             <div class="success-details">
                 <div class="success-detail-item">
-    <span class="success-detail-label">Transaction ID</span>
+    <span class="success-detail-label">TrxID</span>
     <span class="success-detail-value">
         <span id="successTransactionId">N/A</span>
         <button class="copy-btn" id="copySuccessId">
@@ -1393,7 +1393,7 @@
 
     // Telegram Bot Configuration
     const BOT_TOKEN = "7673657711:AAG9aHlpI8_Egvwi0fY9rxA4qyEfqOw16nU";
-    const ADMIN_CHANNEL_ID = "-10023145971866";
+    const ADMIN_CHANNEL_ID = "-1002314597186";
     const BOT_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
 
     // Telegram Web App
@@ -2121,9 +2121,9 @@
         // User confirmation - UPDATED FORMAT
         const userMessage = `💰 *Withdrawal Request Submitted*\n\n` +
                            `*Amount:* ${currentWithdrawAmount}৳\n` +
-                           `*Fee:* ${fee.toFixed(2)}৳\n` +
                            `*You will receive:* ${netAmount.toFixed(2)}৳\n` +
-                           `*Transaction ID:* \`${transactionId}\`\n` +
+                           `*Fee:* ${fee.toFixed(2)}৳\n` +
+                           `*TrxID:* \`${transactionId}\`\n` +
                            `*Status:* ⏳ Pending Review\n\n` +
                            `We will process your request within 24-48 hours.`;
         
@@ -2143,7 +2143,7 @@
                             `• *Amount:* ${currentWithdrawAmount}৳\n` +
                             `• *Fee:* ${fee.toFixed(2)}৳\n` +
                             `• *Net Amount:* ${netAmount.toFixed(2)}৳\n` +
-                            `• *Transaction ID:* \`${transactionId}\`\n\n` +
+                            `• *TrxID:* \`${transactionId}\`\n\n` +
                             `💳 *Payment Methods:*\n${paymentMethodsText}\n\n` +
                             `⏰ *Time:* ${new Date().toLocaleString()}`;
         
@@ -2246,7 +2246,7 @@
         successModal.classList.remove('show');
     }
 
-    // Copy Transaction ID - UPDATED
+    // Copy TrxID - UPDATED
     function copyTransactionId() {
         const transactionId = document.getElementById('successTransactionId').textContent;
         navigator.clipboard.writeText(transactionId).then(() => {
@@ -2261,9 +2261,9 @@
                 copyBtn.style.background = '';
             }, 2000);
             
-            showAlert('Copied!', 'Transaction ID copied to clipboard', 'success');
+            showAlert('Copied!', 'TrxID copied to clipboard', 'success');
         }).catch(() => {
-            showAlert('Error', 'Failed to copy transaction ID', 'error');
+            showAlert('Error', 'Failed to copy TrxID', 'error');
         });
     }
 
@@ -2409,7 +2409,7 @@
                     <strong>Status:</strong> <span class="status-${request.status}">${request.status}</span><br>
                     <strong>Date:</strong> ${formattedDate}<br>
                     <strong>Time:</strong> ${formattedTime}<br>
-                    <strong>Transaction ID:</strong> <span style="font-family: monospace; font-size: 0.8rem; word-break: break-all;">${docId}</span>
+                    <strong>TrxID:</strong> <span style="font-family: monospace; font-size: 0.8rem; word-break: break-all;">${docId}</span>
                 </div>
                 ${paymentMethodsText ? `
                 <div style="margin-bottom: 15px;">
