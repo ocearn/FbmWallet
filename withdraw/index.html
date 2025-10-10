@@ -429,6 +429,7 @@
 
         .password-input-group {
             margin-bottom: 20px;
+            position: relative;
         }
 
         .password-input-group label {
@@ -448,6 +449,25 @@
             font-size: 1.1rem;
             text-align: center;
             letter-spacing: 2px;
+        }
+
+        /* Password Reset Link */
+        .password-reset-link {
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        .password-reset-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .password-reset-link a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
         }
 
         /* Amount Input Page */
@@ -715,6 +735,10 @@
             align-items: center;
             gap: 8px;
             font-size: 0.95rem;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .copy-btn {
@@ -923,74 +947,6 @@
             gap: 5px;
         }
 
-        /* Password Reset Button */
-        .password-reset-btn {
-            background: var(--warning);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 35px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1rem;
-            box-shadow: var(--shadow);
-            margin-left: 10px;
-        }
-
-        /* Password Reset Modal */
-        .password-reset-modal .modal-content {
-            background: var(--card);
-            border-radius: 20px;
-            padding: 30px 20px;
-            max-width: 400px;
-            margin: 0 auto;
-            position: relative;
-            top: 50%;
-            transform: translateY(-50%) scale(0.9);
-            transition: transform 0.3s ease;
-        }
-
-        .password-reset-modal.show .modal-content {
-            transform: translateY(-50%) scale(1);
-        }
-
-        .reset-steps {
-            margin: 20px 0;
-            padding: 15px;
-            background: var(--bg);
-            border-radius: var(--radius);
-        }
-
-        .reset-step {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: var(--radius);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .reset-step:last-child {
-            margin-bottom: 0;
-        }
-
-        .step-number {
-            background: var(--primary);
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
         /* Block Alert Popup */
         .block-alert-popup {
             position: fixed;
@@ -1078,6 +1034,38 @@
             transform: translateY(-2px);
             box-shadow: var(--shadow);
         }
+
+        /* Fee Display */
+        .fee-display {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: var(--radius);
+            padding: 12px 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .fee-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .fee-amount {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .net-amount {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(59, 130, 246, 0.2);
+            font-weight: 600;
+            color: var(--accent);
+        }
     </style>
 </head>
 <body>
@@ -1131,9 +1119,7 @@
                         <span id="userId">ID: ...</span>
                     </div>
                 </div>
-                <button class="password-reset-btn" id="passwordResetBtn" title="Reset Password">
-                    <i class="fas fa-key"></i>
-                </button>
+                <!-- Password reset button removed as requested -->
             </div>
         </header>
 
@@ -1214,6 +1200,18 @@
             Min: <span id="minLimit">৳50</span> • Max: <span id="maxLimit">৳50000</span>
         </div>
 
+        <!-- Fee Display Section -->
+        <div class="fee-display" id="feeDisplay" style="display: none;">
+            <div class="fee-info">
+                <span>Withdrawal Fee ({withdrawFee}%):</span>
+                <span class="fee-amount" id="feeAmount">৳0.00</span>
+            </div>
+            <div class="fee-info">
+                <span>You will receive:</span>
+                <span class="fee-amount" id="netAmount">৳0.00</span>
+            </div>
+        </div>
+
         <button class="btn" id="continueToPaymentBtn">
             <i class="fas fa-arrow-right"></i> Continue
         </button>
@@ -1280,7 +1278,7 @@
         </div>
     </div>
 
-    <!-- Password Verify Modal - With Close Button -->
+    <!-- Password Verify Modal - With Close Button and Reset Link -->
     <div class="modal" id="passwordVerifyModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1297,56 +1295,14 @@
                 <div class="password-input-group">
                     <label for="verifyPassword">Enter your password</label>
                     <input type="password" id="verifyPassword" maxlength="6" pattern="[0-9]{6}" required placeholder="000000">
+                    <div class="password-reset-link">
+                        <a id="passwordResetLink">Forgot Password? Reset here</a>
+                    </div>
                 </div>
                 <button type="submit" class="btn" id="verifySubmitBtn">
                     <i class="fas fa-check"></i> Confirm Withdrawal
                 </button>
             </form>
-        </div>
-    </div>
-
-    <!-- Password Reset Modal -->
-    <div class="modal password-reset-modal" id="passwordResetModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Reset Your Password</div>
-                <button class="close-modal" id="closePasswordReset">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div style="text-align: center; margin-bottom: 20px; color: var(--text-light); font-size: 0.9rem;">
-                <i class="fas fa-key" style="color: var(--warning); font-size: 2rem; margin-bottom: 10px;"></i>
-                <p>To reset your password, please contact our support team on Telegram.</p>
-            </div>
-            
-            <div class="reset-steps">
-                <div class="reset-step">
-                    <div class="step-number">1</div>
-                    <div>Click the button below to open Telegram</div>
-                </div>
-                <div class="reset-step">
-                    <div class="step-number">2</div>
-                    <div>Send your User ID and request for password reset</div>
-                </div>
-                <div class="reset-step">
-                    <div class="step-number">3</div>
-                    <div>Our support team will reset your password</div>
-                </div>
-            </div>
-            
-            <div style="background: var(--bg); padding: 15px; border-radius: var(--radius); margin-bottom: 20px;">
-                <div style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 5px;">Your User ID:</div>
-                <div style="font-family: monospace; font-weight: bold; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center;">
-                    <span id="resetUserId">Loading...</span>
-                    <button class="copy-btn" id="copyUserIdBtn">
-                        <i class="far fa-copy"></i> Copy
-                    </button>
-                </div>
-            </div>
-            
-            <button class="btn btn-accent" id="openTelegramBtn">
-                <i class="fab fa-telegram"></i> Open Telegram Support
-            </button>
         </div>
     </div>
 
@@ -1611,7 +1567,6 @@
             document.getElementById('profileName').textContent = fullName || 'User';
             document.getElementById('userName').textContent = '@' + (userData.username || 'username');
             document.getElementById('userId').textContent = 'ID: ' + userData.chatId;
-            document.getElementById('resetUserId').textContent = userData.chatId;
             
             const profilePic = document.getElementById('profilePic');
             if (userData.photoUrl) {
@@ -1734,19 +1689,14 @@
             document.getElementById('passwordSetupForm').addEventListener('submit', savePassword);
             document.getElementById('passwordVerifyForm').addEventListener('submit', processWithdrawal);
             document.getElementById('closePasswordVerify').addEventListener('click', closePasswordVerify);
-            
-            // Password reset
-            document.getElementById('passwordResetBtn').addEventListener('click', showPasswordResetModal);
-            document.getElementById('closePasswordReset').addEventListener('click', closePasswordResetModal);
-            document.getElementById('openTelegramBtn').addEventListener('click', openTelegramSupport);
-            document.getElementById('copyUserIdBtn').addEventListener('click', copyUserId);
+            document.getElementById('passwordResetLink').addEventListener('click', goToPasswordReset);
             
             // Block alert
             document.getElementById('closeBlockAlert').addEventListener('click', closeBlockAlert);
             document.getElementById('unblockAccountBtn').addEventListener('click', goToUnblockPage);
             
             // Success modal
-            document.getElementById('backHomeBtn').addEventListener('click', showHomePage);
+            document.getElementById('backHomeBtn').addEventListener('click', goToHomePage);
             document.getElementById('joinGroupBtn').addEventListener('click', joinGroup);
             document.getElementById('copySuccessId').addEventListener('click', copyTransactionId);
             
@@ -1754,11 +1704,8 @@
             document.getElementById('depositBtn').addEventListener('click', goToDeposit);
             document.getElementById('closeBalanceAlert').addEventListener('click', closeInsufficientBalanceAlert);
             
-            // Amount input
-            document.getElementById('withdrawAmount').addEventListener('input', validateAmount);
-            
-            // Search history
-            document.getElementById('searchHistory').addEventListener('input', searchHistory);
+            // Amount input with fee calculation
+            document.getElementById('withdrawAmount').addEventListener('input', validateAmountWithFee);
         }
 
         // Page Navigation
@@ -1807,6 +1754,33 @@
             document.getElementById('homePage').style.display = 'none';
             document.getElementById('amountPage').style.display = 'none';
             document.getElementById('paymentPage').style.display = 'block';
+        }
+
+        // Validate Amount with Fee Calculation
+        function validateAmountWithFee() {
+            const amountInput = document.getElementById('withdrawAmount');
+            const continueBtn = document.getElementById('continueToPaymentBtn');
+            const feeDisplay = document.getElementById('feeDisplay');
+            const amount = parseFloat(amountInput.value);
+            
+            if (amount && amount > 0 && amount >= paymentSettings.minWithdraw && amount <= paymentSettings.maxWithdraw) {
+                continueBtn.disabled = false;
+                
+                // Calculate and display fee
+                if (paymentSettings.withdrawFee > 0) {
+                    const fee = (amount * paymentSettings.withdrawFee) / 100;
+                    const netAmount = amount - fee;
+                    
+                    document.getElementById('feeAmount').textContent = `৳${fee.toFixed(2)}`;
+                    document.getElementById('netAmount').textContent = `৳${netAmount.toFixed(2)}`;
+                    feeDisplay.style.display = 'block';
+                } else {
+                    feeDisplay.style.display = 'none';
+                }
+            } else {
+                continueBtn.disabled = true;
+                feeDisplay.style.display = 'none';
+            }
         }
 
         // Close Insufficient Balance Alert
@@ -1914,19 +1888,6 @@
             return false;
         }
 
-        // Validate Amount
-        function validateAmount() {
-            const amountInput = document.getElementById('withdrawAmount');
-            const continueBtn = document.getElementById('continueToPaymentBtn');
-            const amount = parseFloat(amountInput.value);
-            
-            if (amount && amount > 0 && amount >= paymentSettings.minWithdraw && amount <= paymentSettings.maxWithdraw) {
-                continueBtn.disabled = false;
-            } else {
-                continueBtn.disabled = true;
-            }
-        }
-
         // Password Modals
         function showPasswordSetupModal() {
             document.getElementById('passwordSetupModal').style.display = 'block';
@@ -1960,36 +1921,21 @@
             }, 300);
         }
 
-        // Password Reset Modal
-        function showPasswordResetModal() {
-            document.getElementById('passwordResetModal').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('passwordResetModal').classList.add('show');
-            }, 10);
-        }
-
-        function closePasswordResetModal() {
-            document.getElementById('passwordResetModal').classList.remove('show');
-            setTimeout(() => {
-                document.getElementById('passwordResetModal').style.display = 'none';
-            }, 300);
-        }
-
-        function openTelegramSupport() {
-            const userId = userData.chatId;
-            const message = `Hello! I need to reset my password. My User ID is: ${userId}`;
-            const telegramUrl = `https://t.me/your_support_bot?start=reset_${userId}`;
-            
-            window.open(telegramUrl, '_blank');
-            closePasswordResetModal();
-            showAlert('Telegram Opened', 'Please send your request to our support team', 'info');
-        }
-
-        function copyUserId() {
-            const userId = userData.chatId;
-            navigator.clipboard.writeText(userId).then(() => {
-                showAlert('Copied!', 'User ID copied to clipboard', 'success');
+        // Go to Password Reset Page
+        function goToPasswordReset() {
+            const baseUrl = window.location.origin;
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const params = new URLSearchParams({
+                userId: userData.chatId,
+                userName: userData.username,
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                photoUrl: userData.photoUrl || '',
+                action: 'password_reset',
+                theme: isDarkMode ? 'dark' : 'light'
             });
+            
+            window.location.href = `${baseUrl}/password-reset/index.html?${params.toString()}`;
         }
 
         // Go to Unblock Page
@@ -2007,6 +1953,11 @@
             });
             
             window.location.href = `${baseUrl}/unblock/index.html?${params.toString()}`;
+        }
+
+        // Go to Home Page with Reload
+        function goToHomePage() {
+            window.location.reload();
         }
 
         // Save Password
@@ -2105,16 +2056,22 @@
             }
         }
 
-        // Submit Withdraw Request
+        // Submit Withdraw Request with Fee Calculation
         function submitWithdrawRequest() {
+            // Calculate fee
+            const fee = paymentSettings.withdrawFee > 0 ? 
+                (currentWithdrawAmount * paymentSettings.withdrawFee) / 100 : 0;
+            const netAmount = currentWithdrawAmount - fee;
+
             const requestData = {
                 userId: userData.chatId,
                 username: userData.username,
                 fullName: `${userData.firstName} ${userData.lastName}`.trim(),
                 amount: currentWithdrawAmount,
+                fee: fee,
+                netAmount: netAmount,
                 paymentMethods: savedPayments,
                 status: 'pending',
-                fee: paymentSettings.withdrawFee,
                 createdAt: new Date()
             };
             
@@ -2130,10 +2087,10 @@
                     });
                     
                     // Send Telegram notifications
-                    sendTelegramNotifications(transactionId);
+                    sendTelegramNotifications(transactionId, fee, netAmount);
                     
                     // Show success modal
-                    showSuccessModal(transactionId);
+                    showSuccessModal(transactionId, fee);
                     
                     // Reload history to show new request
                     loadWithdrawHistory();
@@ -2144,12 +2101,14 @@
                 });
         }
 
-        // Send Telegram Notifications
-        async function sendTelegramNotifications(transactionId) {
+        // Send Telegram Notifications with Fee Information
+        async function sendTelegramNotifications(transactionId, fee, netAmount) {
             // User confirmation
             const userMessage = `✅ <b>Withdrawal Request Submitted</b>\n\n` +
                                `Your withdrawal request of <b>${currentWithdrawAmount}৳</b> has been successfully submitted.\n\n` +
                                `<b>Transaction ID:</b> <code>${transactionId}</code>\n` +
+                               `<b>Fee:</b> ${fee}৳\n` +
+                               `<b>You will receive:</b> ${netAmount}৳\n` +
                                `<b>Status:</b> Pending Review\n\n` +
                                `We will process your request shortly.`;
             
@@ -2163,7 +2122,9 @@
             const adminMessage = `🚨 <b>New Withdrawal Request</b>\n\n` +
                                 `<b>User:</b> ${userData.firstName} ${userData.lastName} (@${userData.username})\n` +
                                 `<b>User ID:</b> <code>${userData.chatId}</code>\n` +
-                                `<b>Amount:</b> ${currentWithdrawAmount}৳\n\n` +
+                                `<b>Amount:</b> ${currentWithdrawAmount}৳\n` +
+                                `<b>Fee:</b> ${fee}৳\n` +
+                                `<b>Net Amount:</b> ${netAmount}৳\n\n` +
                                 `<b>Payment Methods:</b>\n${paymentMethodsText}\n\n` +
                                 `<b>Transaction ID:</b> <code>${transactionId}</code>`;
             
@@ -2190,11 +2151,15 @@
             }
         }
 
-        // Show Success Modal - MODERN DESIGN
-        function showSuccessModal(transactionId) {
+        // Show Success Modal - MODERN DESIGN with Fee Information
+        function showSuccessModal(transactionId, fee) {
             document.getElementById('successAmount').textContent = `৳${currentWithdrawAmount.toFixed(2)}`;
             document.getElementById('successTransactionId').textContent = transactionId;
             document.getElementById('successDate').textContent = new Date().toLocaleString();
+            
+            // Update fee in success modal
+            const feeElements = document.querySelectorAll('.success-detail-item');
+            feeElements[2].querySelector('.success-detail-value').textContent = `৳${fee.toFixed(2)}`;
             
             const successModal = document.getElementById('successModal');
             successModal.style.display = 'block';
@@ -2209,6 +2174,7 @@
             renderSavedPayments();
             document.getElementById('withdrawAmount').value = '';
             document.getElementById('confirmWithdrawBtn').disabled = true;
+            document.getElementById('feeDisplay').style.display = 'none';
         }
 
         // Create Confetti Effect
@@ -2401,10 +2367,12 @@
                 <div style="text-align: left; max-height: 400px; overflow-y: auto;">
                     <div style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px;">
                         <strong>Amount:</strong> ${request.amount}৳<br>
+                        <strong>Fee:</strong> ${request.fee || 0}৳<br>
+                        <strong>Net Amount:</strong> ${request.netAmount || request.amount}৳<br>
                         <strong>Status:</strong> <span class="status-${request.status}">${request.status}</span><br>
                         <strong>Date:</strong> ${formattedDate}<br>
                         <strong>Time:</strong> ${formattedTime}<br>
-                        <strong>Transaction ID:</strong> ${docId}
+                        <strong>Transaction ID:</strong> <span style="font-family: monospace; font-size: 0.8rem; word-break: break-all;">${docId}</span>
                     </div>
                     ${paymentMethodsText ? `
                     <div style="margin-bottom: 15px;">
