@@ -1432,7 +1432,7 @@
                 pattern: "^\\d{6,11}$", 
                 placeholder: "ID1042457700", 
                 label: "Binance ID",
-                logo: "https://i.ibb.co/FbzYZPst/binance.pngg"
+                logo: "https://i.ibb.co/FbzYZPst/binance.png"
             },
             Payeer: { 
                 pattern: "^P\\d{7,10}$", 
@@ -1736,12 +1736,12 @@
             }
             
             if (amount < paymentSettings.minWithdraw) {
-                showAlert('Minimum Amount', `Minimum withdrawal amount is ৳${paymentSettings.minWithdraw}`, 'error');
+                showAlert('Minimum Amount', `Minimum withdrawal amount is $${paymentSettings.minWithdraw}`, 'error');
                 return;
             }
             
             if (amount > paymentSettings.maxWithdraw) {
-                showAlert('Maximum Amount', `Maximum withdrawal amount is ৳${paymentSettings.maxWithdraw}`, 'error');
+                showAlert('Maximum Amount', `Maximum withdrawal amount is $${paymentSettings.maxWithdraw}`, 'error');
                 return;
             }
             
@@ -1771,8 +1771,8 @@
                     const fee = (amount * paymentSettings.withdrawFee) / 100;
                     const netAmount = amount - fee;
                     
-                    document.getElementById('feeAmount').textContent = `৳${fee.toFixed(2)}`;
-                    document.getElementById('netAmount').textContent = `৳${netAmount.toFixed(2)}`;
+                    document.getElementById('feeAmount').textContent = `$${fee.toFixed(2)}`;
+                    document.getElementById('netAmount').textContent = `$${netAmount.toFixed(2)}`;
                     feeDisplay.style.display = 'block';
                 } else {
                     feeDisplay.style.display = 'none';
